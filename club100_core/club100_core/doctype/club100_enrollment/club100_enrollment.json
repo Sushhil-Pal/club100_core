@@ -22,7 +22,9 @@
   "sales_invoice",
   "sponsored_by",
   "completion_",
-  "notes"
+  "notes",
+  "baseline_assessment",
+  "latest_assessment"
  ],
  "fields": [
   {
@@ -126,12 +128,24 @@
    "fieldtype": "Link",
    "label": "Cohort",
    "options": "Club100 Cohort"
+  },
+  {
+   "fieldname": "baseline_assessment",
+   "fieldtype": "Link",
+   "label": "Baseline Assessment",
+   "options": "Club100 Assessment"
+  },
+  {
+   "fieldname": "latest_assessment",
+   "fieldtype": "Link",
+   "label": "Latest Assessment",
+   "options": "Club100 Assessment"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 13:27:23.156954",
+ "modified": "2026-09-25 16:59:41.206057",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Enrollment",

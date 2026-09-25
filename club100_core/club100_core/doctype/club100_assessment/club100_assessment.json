@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:C100-ASMT-{#####}",
+ "creation": "2026-09-25 16:45:20.168348",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "member",
+  "enrollment",
+  "program",
+  "assessment_type",
+  "assessment_date",
+  "assessor",
+  "delivery_mode",
+  "fitness_score",
+  "fitness_level",
+  "metrics",
+  "notes",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Member",
+   "options": "Club100 Member",
+   "reqd": 1
+  },
+  {
+   "fieldname": "enrollment",
+   "fieldtype": "Link",
+   "label": "Enrollment",
+   "options": "Club100 Enrollment"
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "label": "Program",
+   "options": "Club100 Program"
+  },
+  {
+   "fieldname": "assessment_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Assessment Type",
+   "options": "Baseline\nReassessment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assessment_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Assessment Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assessor",
+   "fieldtype": "Link",
+   "label": "Assessor",
+   "options": "Club100 Trainer"
+  },
+  {
+   "fieldname": "delivery_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Delivery Mode",
+   "options": "Offline\nOnline",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fitness_score",
+   "fieldtype": "Float",
+   "label": "Fitness Score"
+  },
+  {
+   "fieldname": "fitness_level",
+   "fieldtype": "Select",
+   "label": "Fitness Level",
+   "options": "Beginner\nIntermediate\nAdvanced"
+  },
+  {
+   "fieldname": "metrics",
+   "fieldtype": "Table",
+   "label": "Metrics",
+   "options": "Club100 Assessment Metric"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nCompleted"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-25 16:54:12.684915",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Assessment",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

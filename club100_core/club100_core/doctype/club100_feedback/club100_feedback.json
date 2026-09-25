@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:C100-FBK-{#####}",
+ "creation": "2026-09-25 18:48:42.389320",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "member",
+  "session",
+  "enrollment",
+  "overall_rating",
+  "difficulty_rating",
+  "trainer_rating",
+  "energy_after_session",
+  "would_recommend",
+  "comments",
+  "submitted_at",
+  "source",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Member",
+   "options": "Club100 Member",
+   "reqd": 1
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Session",
+   "options": "Club100 Session",
+   "reqd": 1
+  },
+  {
+   "fieldname": "enrollment",
+   "fieldtype": "Link",
+   "label": "Enrollment",
+   "options": "Club100 Enrollment"
+  },
+  {
+   "fieldname": "overall_rating",
+   "fieldtype": "Rating",
+   "in_list_view": 1,
+   "label": "Overall Rating",
+   "reqd": 1
+  },
+  {
+   "fieldname": "difficulty_rating",
+   "fieldtype": "Select",
+   "label": "Difficulty Rating",
+   "options": "Too Easy\nJust Right\nChallenging\nToo Difficult"
+  },
+  {
+   "fieldname": "trainer_rating",
+   "fieldtype": "Rating",
+   "label": "Trainer Rating"
+  },
+  {
+   "fieldname": "energy_after_session",
+   "fieldtype": "Select",
+   "label": "Energy After Session",
+   "options": "Low\nSame\nBetter\nExcellent"
+  },
+  {
+   "default": "0",
+   "fieldname": "would_recommend",
+   "fieldtype": "Check",
+   "label": "Would Recommend"
+  },
+  {
+   "fieldname": "comments",
+   "fieldtype": "Small Text",
+   "label": "Comments"
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Member App\nTrainer\nAdmin"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Submitted\nReviewed",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-25 18:57:56.301644",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Feedback",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
