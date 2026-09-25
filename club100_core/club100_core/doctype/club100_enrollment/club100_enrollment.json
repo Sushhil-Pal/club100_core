@@ -9,6 +9,7 @@
  "field_order": [
   "member",
   "program",
+  "cohort",
   "organization",
   "enrollment_type",
   "enrollment_date",
@@ -119,12 +120,18 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "cohort",
+   "fieldtype": "Link",
+   "label": "Cohort",
+   "options": "Club100 Cohort"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 12:39:15.545055",
+ "modified": "2026-09-25 13:27:23.156954",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Enrollment",

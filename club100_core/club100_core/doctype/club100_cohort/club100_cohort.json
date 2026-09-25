@@ -1,0 +1,153 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-09-25 12:53:06.292652",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "cohort_name",
+  "program",
+  "organization",
+  "cohort_type",
+  "delivery_mode",
+  "fitness_level",
+  "capacity",
+  "start_date",
+  "primary_trainer",
+  "end_date",
+  "time_zone",
+  "status",
+  "meeting_provider",
+  "default_meeting_url",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "cohort_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Cohort Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Program",
+   "options": "Club100 Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Link",
+   "label": "Organization",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "cohort_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Cohort Type",
+   "options": "Public\nPrivate",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delivery_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Delivery Mode",
+   "options": "Online\nOffline\nHybrid",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fitness_level",
+   "fieldtype": "Select",
+   "label": "Fitness Level",
+   "options": "Beginner\nIntermediate\nAdvanced\nMixed"
+  },
+  {
+   "default": "25",
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "label": "Capacity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "default": "Asia/Kolkata",
+   "fieldname": "time_zone",
+   "fieldtype": "Data",
+   "label": "Time Zone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Planned\nOpen\nActive\nCompleted\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "meeting_provider",
+   "fieldtype": "Select",
+   "label": "Meeting Provider",
+   "options": "Zoom\nTeams\nGoogle Meet\nOther"
+  },
+  {
+   "fieldname": "default_meeting_url",
+   "fieldtype": "Data",
+   "label": "Default Meeting URL"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "primary_trainer",
+   "fieldtype": "Link",
+   "label": "Primary Trainer",
+   "options": "Club100 Trainer",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-25 13:40:27.689306",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Cohort",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
