@@ -2,7 +2,7 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
- "autoname": "field:full_name",
+ "autoname": "format:C100-MEM-{#####}",
  "creation": "2026-09-25 11:11:30.834368",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -36,7 +36,7 @@
    "fieldname": "full_name",
    "fieldtype": "Data",
    "label": "Full Name",
-   "unique": 1
+   "read_only": 1
   },
   {
    "fieldname": "email",
@@ -127,11 +127,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 20:46:08.860217",
+ "modified": "2026-09-25 21:35:33.138611",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Member",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
