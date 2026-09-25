@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:C100-ATT-{#####}",
+ "creation": "2026-09-25 14:55:18.138490",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "member",
+  "session",
+  "attendance_mode",
+  "source",
+  "join_time",
+  "leave_time",
+  "minutes_attended",
+  "attendance_status",
+  "recorded_by",
+  "recorded_at",
+  "external_participant_id",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Member",
+   "options": "Club100 Member",
+   "reqd": 1
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Session",
+   "options": "Club100 Session",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attendance_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Attendance Mode",
+   "options": "Automatic\nTrainer Marked",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Source",
+   "options": "Zoom\nTeams\nGoogle Meet\nManual\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "join_time",
+   "fieldtype": "Datetime",
+   "label": "Join Time"
+  },
+  {
+   "fieldname": "leave_time",
+   "fieldtype": "Datetime",
+   "label": "Leave Time"
+  },
+  {
+   "fieldname": "minutes_attended",
+   "fieldtype": "Int",
+   "label": "Minutes Attended",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attendance_status",
+   "fieldtype": "Select",
+   "label": "Attendance Status",
+   "options": "Present\nPartial\nAbsent",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Link",
+   "label": "Recorded By",
+   "options": "User"
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "label": "Recorded At"
+  },
+  {
+   "fieldname": "external_participant_id",
+   "fieldtype": "Data",
+   "label": "External Participant ID"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-25 15:09:11.620670",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Attendance",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
