@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-09-25 12:09:59.080597",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "program_name",
+  "program_code",
+  "delivery_mode",
+  "audience",
+  "duration_weeks",
+  "sessions_per_week",
+  "session_duration_minutes",
+  "default_cohort_capacity",
+  "assessment_included",
+  "reassessment_included",
+  "payment_required",
+  "selling_item",
+  "standard_price",
+  "description",
+  "publish_to_app",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "program_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Program Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "program_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Program Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delivery_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Delivery Mode",
+   "options": "Online\nOffline\nHybrid",
+   "reqd": 1
+  },
+  {
+   "fieldname": "audience",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Audience",
+   "options": "Individual\nCorporate\nSociety\nMixed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "duration_weeks",
+   "fieldtype": "Int",
+   "label": "Duration Weeks",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sessions_per_week",
+   "fieldtype": "Int",
+   "label": "Sessions Per Week",
+   "reqd": 1
+  },
+  {
+   "default": "60",
+   "fieldname": "session_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Session Duration Minutes",
+   "reqd": 1
+  },
+  {
+   "default": "25",
+   "fieldname": "default_cohort_capacity",
+   "fieldtype": "Int",
+   "label": "Default Cohort Capacity",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "assessment_included",
+   "fieldtype": "Check",
+   "label": "Assessment Included"
+  },
+  {
+   "default": "1",
+   "fieldname": "reassessment_included",
+   "fieldtype": "Check",
+   "label": "Reassessment Included"
+  },
+  {
+   "default": "1",
+   "fieldname": "payment_required",
+   "fieldtype": "Check",
+   "label": "Payment Required"
+  },
+  {
+   "fieldname": "selling_item",
+   "fieldtype": "Link",
+   "label": "Selling Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "standard_price",
+   "fieldtype": "Currency",
+   "label": "Standard Price"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "publish_to_app",
+   "fieldtype": "Check",
+   "label": "Publish to App"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nInactive",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-25 12:19:13.872721",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Program",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
