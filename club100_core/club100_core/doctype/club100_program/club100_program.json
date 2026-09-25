@@ -2,6 +2,7 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "field:program_name",
  "creation": "2026-09-25 12:09:59.080597",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -29,7 +30,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Program Name",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "program_code",
@@ -131,10 +133,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 12:19:13.872721",
+ "modified": "2026-09-25 12:45:37.600648",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Program",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
