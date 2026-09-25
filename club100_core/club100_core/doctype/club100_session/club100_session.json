@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:C100-SES-{#####}",
+ "creation": "2026-09-25 14:30:05.102510",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "cohort",
+  "program",
+  "trainer",
+  "workout_content",
+  "session_date",
+  "start_time",
+  "end_time",
+  "delivery_mode",
+  "meeting_provider",
+  "meeting_id",
+  "meeting_url",
+  "status",
+  "attendance_synced",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "cohort",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Cohort",
+   "options": "Club100 Cohort",
+   "reqd": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Program",
+   "options": "Club100 Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "trainer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Trainer",
+   "options": "Club100 Trainer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "workout_content",
+   "fieldtype": "Link",
+   "label": "Workout Content",
+   "options": "Club100 Workout Content"
+  },
+  {
+   "fieldname": "session_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Session Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Start Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "label": "End Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delivery_mode",
+   "fieldtype": "Select",
+   "label": "Delivery Mode",
+   "options": "Online\nOffline\nHybrid",
+   "reqd": 1
+  },
+  {
+   "fieldname": "meeting_provider",
+   "fieldtype": "Select",
+   "label": "Meeting Provider",
+   "options": "Zoom\nTeams\nGoogle Meet\nOther"
+  },
+  {
+   "fieldname": "meeting_id",
+   "fieldtype": "Data",
+   "label": "Meeting ID"
+  },
+  {
+   "fieldname": "meeting_url",
+   "fieldtype": "Data",
+   "label": "Meeting URL"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Scheduled\nLive\nCompleted\nCancelled"
+  },
+  {
+   "default": "0",
+   "fieldname": "attendance_synced",
+   "fieldtype": "Check",
+   "label": "Attendance Synced"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-25 14:40:17.298989",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Session",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

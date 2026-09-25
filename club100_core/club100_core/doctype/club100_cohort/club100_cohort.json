@@ -2,6 +2,7 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "field:cohort_name",
  "creation": "2026-09-25 12:53:06.292652",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -126,10 +127,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 13:40:27.689306",
+ "modified": "2026-09-25 14:44:50.399928",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Cohort",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
