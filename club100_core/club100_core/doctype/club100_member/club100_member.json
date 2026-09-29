@@ -17,10 +17,18 @@
   "member_type",
   "organization",
   "customer",
+  "user",
   "contact",
   "current_fitness_level",
   "joining_date",
   "status",
+  "app_access_status",
+  "first_app_access_on",
+  "onboarding_status",
+  "fitness_goal",
+  "preferred_delivery_mode",
+  "medical_notes",
+  "onboarding_completed_on",
   "profile_image",
   "notes"
  ],
@@ -122,12 +130,61 @@
    "fieldname": "last_name",
    "fieldtype": "Data",
    "label": "Last Name"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "default": "First Time",
+   "fieldname": "app_access_status",
+   "fieldtype": "Select",
+   "label": "App Access Status",
+   "options": "Disabled\nFirst Time\nActive"
+  },
+  {
+   "fieldname": "first_app_access_on",
+   "fieldtype": "Datetime",
+   "label": "First App Access On",
+   "read_only": 1
+  },
+  {
+   "default": "Not Started",
+   "fieldname": "onboarding_status",
+   "fieldtype": "Select",
+   "label": "Onboarding Status",
+   "options": "Not Started\nIn Progress\nCompleted"
+  },
+  {
+   "fieldname": "fitness_goal",
+   "fieldtype": "Select",
+   "label": "Fitness Goal",
+   "options": "Improve Strength\nImprove Mobility\nImprove Endurance\nWeight Management\nGeneral Fitness\nHealthy Aging\nSports Performance\nOther"
+  },
+  {
+   "fieldname": "preferred_delivery_mode",
+   "fieldtype": "Select",
+   "label": "Preferred Delivery Mode",
+   "options": "Online\nOffline\nHybrid"
+  },
+  {
+   "fieldname": "medical_notes",
+   "fieldtype": "Small Text",
+   "label": "Medical / Physical Notes"
+  },
+  {
+   "fieldname": "onboarding_completed_on",
+   "fieldtype": "Datetime",
+   "label": "Onboarding Completed On",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 21:35:33.138611",
+ "modified": "2026-09-29 09:42:57.976875",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Member",

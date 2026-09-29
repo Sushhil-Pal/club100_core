@@ -21,7 +21,7 @@
   "payment_status",
   "sales_invoice",
   "sponsored_by",
-  "completion_",
+  "completion_percentage",
   "notes",
   "baseline_assessment",
   "latest_assessment"
@@ -113,12 +113,6 @@
    "options": "Customer"
   },
   {
-   "fieldname": "completion_",
-   "fieldtype": "Percent",
-   "label": "Completion %",
-   "read_only": 1
-  },
-  {
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
@@ -140,12 +134,18 @@
    "fieldtype": "Link",
    "label": "Latest Assessment",
    "options": "Club100 Assessment"
+  },
+  {
+   "fieldname": "completion_percentage",
+   "fieldtype": "Percent",
+   "label": "Completion %",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 16:59:41.206057",
+ "modified": "2026-09-27 19:13:29.259466",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Enrollment",
