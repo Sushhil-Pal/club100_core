@@ -1,0 +1,18 @@
+﻿metric,proposed_required,basis
+BMI,1,Proposed: core/easy-to-measure
+Waist,1,Proposed: core/easy-to-measure
+FAT Ratio,0,Proposed optional: equipment-dependent or less universally suitable
+Visceral Fat,0,Proposed optional: equipment-dependent or less universally suitable
+Resting Heart Rate,0,Proposed optional: equipment-dependent or less universally suitable
+Recovery Heart Rate,0,Proposed optional: equipment-dependent or less universally suitable
+Heart Rate Recovery,0,Proposed optional: equipment-dependent or less universally suitable
+Blood Pressure,0,Proposed optional: equipment-dependent or less universally suitable
+Chair Stand,1,Proposed: core/easy-to-measure
+Wall Sit,1,Proposed: core/easy-to-measure
+Pushups,0,Proposed optional: equipment-dependent or less universally suitable
+Plank Hold,1,Proposed: core/easy-to-measure
+Sit & Reach,1,Proposed: core/easy-to-measure
+Shoulder Flexibility,1,Proposed: core/easy-to-measure
+Deep Squat,1,Proposed: core/easy-to-measure
+Single Leg Balance,1,Proposed: core/easy-to-measure
+Self-Assessment,1,Proposed: core/easy-to-measure

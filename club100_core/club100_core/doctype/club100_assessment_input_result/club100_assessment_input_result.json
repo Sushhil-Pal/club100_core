@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-09-30 12:46:24.797761",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "input",
+  "input_name",
+  "category",
+  "result_type",
+  "unit",
+  "required",
+  "value",
+  "text_value",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "input",
+   "fieldtype": "Link",
+   "label": "Input",
+   "options": "Club100 Assessment Input"
+  },
+  {
+   "fieldname": "input_name",
+   "fieldtype": "Data",
+   "label": "Input Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Data",
+   "label": "Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_type",
+   "fieldtype": "Data",
+   "label": "Result Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Unit",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Required",
+   "read_only": 1
+  },
+  {
+   "fieldname": "text_value",
+   "fieldtype": "Small Text",
+   "label": "Text Value"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Float",
+   "label": "Value"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-30 17:04:09.933205",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Assessment Input Result",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

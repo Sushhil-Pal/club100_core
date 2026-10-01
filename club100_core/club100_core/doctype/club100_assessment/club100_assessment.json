@@ -8,6 +8,8 @@
  "engine": "InnoDB",
  "field_order": [
   "member",
+  "template",
+  "template_version",
   "enrollment",
   "program",
   "assessment_type",
@@ -16,7 +18,9 @@
   "delivery_mode",
   "fitness_score",
   "fitness_level",
+  "inputs",
   "metrics",
+  "category_scores",
   "notes",
   "status"
  ],
@@ -97,12 +101,37 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "Draft\nCompleted"
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Club100 Assessment Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Int",
+   "label": "Template Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "category_scores",
+   "fieldtype": "Table",
+   "label": "Category Scores",
+   "options": "Club100 Assessment Category Score"
+  },
+  {
+   "fieldname": "inputs",
+   "fieldtype": "Table",
+   "label": "Inputs",
+   "options": "Club100 Assessment Input Result"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 16:54:12.684915",
+ "modified": "2026-09-30 13:27:50.741974",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Assessment",

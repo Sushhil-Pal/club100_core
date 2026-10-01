@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:input_name",
+ "creation": "2026-09-30 09:48:52.190600",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "input_name",
+  "input_code",
+  "category",
+  "result_type",
+  "unit",
+  "options",
+  "description",
+  "instructions",
+  "equipment_required",
+  "online_eligible",
+  "offline_eligible",
+  "active"
+ ],
+ "fields": [
+  {
+   "fieldname": "input_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Input Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "input_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Input Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Body Composition\nCardiovascular Health\nStrength & Endurance\nMobility & Balance\nWell-being & Readiness"
+  },
+  {
+   "fieldname": "result_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Result Type",
+   "options": "Number\nCount\nDuration\nSelect\nRating\nYes/No\nText",
+   "reqd": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Unit"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "label": "Options",
+   "options": "Full\nKnee"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Text",
+   "label": "Instructions"
+  },
+  {
+   "fieldname": "equipment_required",
+   "fieldtype": "Small Text",
+   "label": "Equipment Required"
+  },
+  {
+   "default": "0",
+   "fieldname": "online_eligible",
+   "fieldtype": "Check",
+   "label": "Online Eligible"
+  },
+  {
+   "default": "0",
+   "fieldname": "offline_eligible",
+   "fieldtype": "Check",
+   "label": "Offline Eligible"
+  },
+  {
+   "default": "1",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-01 10:50:09.916469",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Assessment Input",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

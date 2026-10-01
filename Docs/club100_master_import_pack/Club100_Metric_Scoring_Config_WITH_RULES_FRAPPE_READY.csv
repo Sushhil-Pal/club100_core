@@ -1,0 +1,155 @@
+﻿Config Name,Metric,Version,Effective From,Effective To,Active,Notes,ID (Rules),Age From (Rules),Age To (Rules),Component (Rules),Excellent Value (Rules),Factor 1 (Rules),Factor 2 (Rules),Gender (Rules),Lower Limit (Rules),Method (Rules),Poor Value (Rules),Risk Value (Rules),Score (Rules),Sequence (Rules),Upper Limit (Rules)
+Single Leg Balance v1,Single Leg Balance,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,45,,,Both,,Linear-Higher,5,30,,1,
+,,,,,,,,40,49,,42,,,Both,,Linear-Higher,5,28,,2,
+,,,,,,,,50,59,,40,,,Both,,Linear-Higher,5,25,,3,
+,,,,,,,,60,64,,32,,,Both,,Linear-Higher,5,20,,4,
+,,,,,,,,65,69,,32,,,Both,,Linear-Higher,5,20,,5,
+,,,,,,,,70,74,,22,,,Both,,Linear-Higher,5,12,,6,
+,,,,,,,,75,79,,22,,,Both,,Linear-Higher,5,12,,7,
+,,,,,,,,80,,,10,,,Both,,Linear-Higher,3,6,,8,
+Deep Squat v1,Deep Squat,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,,,,,,,Both,0.0,Direct,,,,1,5.0
+Shoulder Flexibility v1,Shoulder Flexibility,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,5,,,Male,,Linear-Higher,-15,0,,1,
+,,,,,,,,40,49,,3,,,Male,,Linear-Higher,-16,-2,,2,
+,,,,,,,,50,59,,1,,,Male,,Linear-Higher,-18,-4,,3,
+,,,,,,,,60,64,,0,,,Male,,Linear-Higher,-20,-8,,4,
+,,,,,,,,65,69,,-2,,,Male,,Linear-Higher,-22,-10,,5,
+,,,,,,,,70,74,,-3,,,Male,,Linear-Higher,-23,-11,,6,
+,,,,,,,,75,79,,-5,,,Male,,Linear-Higher,-25,-13,,7,
+,,,,,,,,80,,,-8,,,Male,,Linear-Higher,-30,-16,,8,
+,,,,,,,,18,39,,8,,,Female,,Linear-Higher,-10,2,,9,
+,,,,,,,,40,49,,7,,,Female,,Linear-Higher,-11,1,,10,
+,,,,,,,,50,59,,5,,,Female,,Linear-Higher,-13,0,,11,
+,,,,,,,,60,64,,4,,,Female,,Linear-Higher,-15,-4,,12,
+,,,,,,,,65,69,,3,,,Female,,Linear-Higher,-16,-5,,13,
+,,,,,,,,70,74,,2,,,Female,,Linear-Higher,-18,-6,,14,
+,,,,,,,,75,79,,1,,,Female,,Linear-Higher,-20,-8,,15,
+,,,,,,,,80,,,-2,,,Female,,Linear-Higher,-25,-11,,16,
+Sit & Reach v1,Sit & Reach,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,10,,,Male,,Linear-Higher,-10,0,,1,
+,,,,,,,,40,49,,8,,,Male,,Linear-Higher,-10,-1,,2,
+,,,,,,,,50,59,,6,,,Male,,Linear-Higher,-11,-2,,3,
+,,,,,,,,60,64,,5,,,Male,,Linear-Higher,-12,-3,,4,
+,,,,,,,,65,69,,4,,,Male,,Linear-Higher,-13,-4,,5,
+,,,,,,,,70,74,,3,,,Male,,Linear-Higher,-14,-5,,6,
+,,,,,,,,75,79,,2,,,Male,,Linear-Higher,-15,-6,,7,
+,,,,,,,,80,,,0,,,Male,,Linear-Higher,-18,-8,,8,
+,,,,,,,,18,39,,14,,,Female,,Linear-Higher,-8,3,,9,
+,,,,,,,,40,49,,12,,,Female,,Linear-Higher,-8,2,,10,
+,,,,,,,,50,59,,10,,,Female,,Linear-Higher,-9,1,,11,
+,,,,,,,,60,64,,9,,,Female,,Linear-Higher,-10,0,,12,
+,,,,,,,,65,69,,8,,,Female,,Linear-Higher,-11,-1,,13,
+,,,,,,,,70,74,,7,,,Female,,Linear-Higher,-12,-2,,14,
+,,,,,,,,75,79,,6,,,Female,,Linear-Higher,-13,-3,,15,
+,,,,,,,,80,,,4,,,Female,,Linear-Higher,-15,-5,,16,
+Plank Hold v1,Plank Hold,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,120,,,Male,,Linear-Higher,20,60,,1,
+,,,,,,,,40,49,,100,,,Male,,Linear-Higher,15,50,,2,
+,,,,,,,,50,59,,80,,,Male,,Linear-Higher,12,40,,3,
+,,,,,,,,60,64,,65,,,Male,,Linear-Higher,10,30,,4,
+,,,,,,,,65,69,,55,,,Male,,Linear-Higher,8,25,,5,
+,,,,,,,,70,74,,45,,,Male,,Linear-Higher,7,20,,6,
+,,,,,,,,75,79,,35,,,Male,,Linear-Higher,5,15,,7,
+,,,,,,,,80,,,25,,,Male,,Linear-Higher,3,10,,8,
+,,,,,,,,18,39,,90,,,Female,,Linear-Higher,15,45,,9,
+,,,,,,,,40,49,,75,,,Female,,Linear-Higher,12,40,,10,
+,,,,,,,,50,59,,60,,,Female,,Linear-Higher,10,30,,11,
+,,,,,,,,60,64,,50,,,Female,,Linear-Higher,8,25,,12,
+,,,,,,,,65,69,,45,,,Female,,Linear-Higher,7,20,,13,
+,,,,,,,,70,74,,35,,,Female,,Linear-Higher,5,15,,14,
+,,,,,,,,75,79,,30,,,Female,,Linear-Higher,5,12,,15,
+,,,,,,,,80,,,20,,,Female,,Linear-Higher,3,8,,16,
+Pushups v1,Pushups,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,40,,,Male,,Linear-Higher,8,22,,1,
+,,,,,,,,40,49,,34,,,Male,,Linear-Higher,6,18,,2,
+,,,,,,,,50,59,,28,,,Male,,Linear-Higher,5,14,,3,
+,,,,,,,,60,64,,24,,,Male,,Linear-Higher,3,11,,4,
+,,,,,,,,65,69,,20,,,Male,,Linear-Higher,2,9,,5,
+,,,,,,,,70,74,,17,,,Male,,Linear-Higher,2,7,,6,
+,,,,,,,,75,79,,14,,,Male,,Linear-Higher,1,6,,7,
+,,,,,,,,80,,,10,,,Male,,Linear-Higher,1,4,,8,
+,,,,,,,,18,39,,30,,,Female,,Linear-Higher,6,16,,9,
+,,,,,,,,40,49,,24,,,Female,,Linear-Higher,4,12,,10,
+,,,,,,,,50,59,,20,,,Female,,Linear-Higher,3,10,,11,
+,,,,,,,,60,64,,17,,,Female,,Linear-Higher,2,7,,12,
+,,,,,,,,65,69,,14,,,Female,,Linear-Higher,2,6,,13,
+,,,,,,,,70,74,,12,,,Female,,Linear-Higher,1,5,,14,
+,,,,,,,,75,79,,10,,,Female,,Linear-Higher,1,4,,15,
+,,,,,,,,80,,,8,,,Female,,Linear-Higher,1,3,,16,
+Wall Sit v1,Wall Sit,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,120,,,Male,,Linear-Higher,20,60,,1,
+,,,,,,,,40,49,,100,,,Male,,Linear-Higher,15,50,,2,
+,,,,,,,,50,59,,80,,,Male,,Linear-Higher,12,40,,3,
+,,,,,,,,60,64,,65,,,Male,,Linear-Higher,10,30,,4,
+,,,,,,,,65,69,,55,,,Male,,Linear-Higher,8,25,,5,
+,,,,,,,,70,74,,45,,,Male,,Linear-Higher,7,20,,6,
+,,,,,,,,75,79,,35,,,Male,,Linear-Higher,5,15,,7,
+,,,,,,,,80,,,25,,,Male,,Linear-Higher,3,10,,8,
+,,,,,,,,18,39,,100,,,Female,,Linear-Higher,15,50,,9,
+,,,,,,,,40,49,,85,,,Female,,Linear-Higher,12,40,,10,
+,,,,,,,,50,59,,70,,,Female,,Linear-Higher,10,35,,11,
+,,,,,,,,60,64,,55,,,Female,,Linear-Higher,8,25,,12,
+,,,,,,,,65,69,,45,,,Female,,Linear-Higher,7,20,,13,
+,,,,,,,,70,74,,38,,,Female,,Linear-Higher,5,16,,14,
+,,,,,,,,75,79,,30,,,Female,,Linear-Higher,5,12,,15,
+,,,,,,,,80,,,20,,,Female,,Linear-Higher,3,8,,16,
+Chair Stand v1,Chair Stand,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,30,,,Male,,Linear-Higher,10,22,,1,
+,,,,,,,,40,49,,27,,,Male,,Linear-Higher,9,20,,2,
+,,,,,,,,50,59,,24,,,Male,,Linear-Higher,9,18,,3,
+,,,,,,,,60,64,,19,,,Male,,Linear-Higher,9,14,,4,
+,,,,,,,,65,69,,18,,,Male,,Linear-Higher,8,12,,5,
+,,,,,,,,70,74,,17,,,Male,,Linear-Higher,8,12,,6,
+,,,,,,,,75,79,,17,,,Male,,Linear-Higher,7,11,,7,
+,,,,,,,,80,,,14,,,Male,,Linear-Higher,4,9,,8,
+,,,,,,,,18,39,,28,,,Female,,Linear-Higher,10,20,,9,
+,,,,,,,,40,49,,25,,,Female,,Linear-Higher,9,18,,10,
+,,,,,,,,50,59,,22,,,Female,,Linear-Higher,8,17,,11,
+,,,,,,,,60,64,,17,,,Female,,Linear-Higher,8,12,,12,
+,,,,,,,,65,69,,16,,,Female,,Linear-Higher,8,11,,13,
+,,,,,,,,70,74,,16,,,Female,,Linear-Higher,7,10,,14,
+,,,,,,,,75,79,,15,,,Female,,Linear-Higher,6,10,,15,
+,,,,,,,,80,,,13,,,Female,,Linear-Higher,4,8,,16,
+Blood Pressure v1,Blood Pressure,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,,,Systolic,,,,Both,0.0,Category,,,100.0,1,119.0
+,,,,,,,,,,Systolic,,,,Both,120.0,Category,,,90.0,2,129.0
+,,,,,,,,,,Systolic,,,,Both,130.0,Category,,,75.0,3,139.0
+,,,,,,,,,,Systolic,,,,Both,140.0,Category,,,50.0,4,159.0
+,,,,,,,,,,Systolic,,,,Both,160.0,Category,,,25.0,5,179.0
+,,,,,,,,,,Systolic,,,,Both,180.0,Category,,,0.0,6,999.0
+,,,,,,,,,,Diastolic,,,,Both,0.0,Category,,,100.0,7,79.0
+,,,,,,,,,,Diastolic,,,,Both,80.0,Category,,,75.0,8,89.0
+,,,,,,,,,,Diastolic,,,,Both,90.0,Category,,,50.0,9,99.0
+,,,,,,,,,,Diastolic,,,,Both,100.0,Category,,,25.0,10,109.0
+,,,,,,,,,,Diastolic,,,,Both,110.0,Category,,,0.0,11,999.0
+,,,,,,,,,,Diastolic,,,,Both,,Category,,,,12,
+Heart Rate Recovery v1,Heart Rate Recovery,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,40,,,Both,,Linear-Higher,10,25,,1,
+,,,,,,,,40,49,,38,,,Both,,Linear-Higher,10,24,,2,
+,,,,,,,,50,59,,35,,,Both,,Linear-Higher,10,22,,3,
+,,,,,,,,60,64,,32,,,Both,,Linear-Higher,10,20,,4,
+,,,,,,,,65,69,,30,,,Both,,Linear-Higher,10,19,,5,
+,,,,,,,,70,74,,28,,,Both,,Linear-Higher,10,18,,6,
+,,,,,,,,75,79,,26,,,Both,,Linear-Higher,10,17,,7,
+,,,,,,,,80,,,24,,,Both,,Linear-Higher,10,16,,8,
+Recovery Heart Rate v1,Recovery Heart Rate,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,90,,,Both,,Linear-Lower,145,110,,1,
+,,,,,,,,40,49,,88,,,Both,,Linear-Lower,140,105,,2,
+,,,,,,,,50,59,,85,,,Both,,Linear-Lower,135,100,,3,
+,,,,,,,,60,64,,82,,,Both,,Linear-Lower,130,96,,4,
+,,,,,,,,65,69,,80,,,Both,,Linear-Lower,125,93,,5,
+,,,,,,,,70,74,,78,,,Both,,Linear-Lower,120,90,,6,
+,,,,,,,,75,79,,76,,,Both,,Linear-Lower,118,88,,7,
+,,,,,,,,80,,,75,,,Both,,Linear-Lower,115,85,,8,
+Resting Heart Rate v1,Resting Heart Rate,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,,,,60.0,,,Both,,Linear-Lower,100.0,80.0,,1,
+Visceral Fat v1,Visceral Fat,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,,,,5.0,,,Both,,Linear-Lower,20.0,10.0,,1,
+FAT Ratio v1,FAT Ratio,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,18,39,,,10,8,Male,12,Range,,,,1,20
+,,,,,,,,40,49,,,10,8,Male,14,Range,,,,2,22
+,,,,,,,,50,59,,,10,8,Male,16,Range,,,,3,24
+,,,,,,,,60,64,,,10,8,Male,18,Range,,,,4,26
+,,,,,,,,65,69,,,10,8,Male,19,Range,,,,5,27
+,,,,,,,,70,74,,,10,8,Male,20,Range,,,,6,28
+,,,,,,,,75,79,,,10,8,Male,20,Range,,,,7,28
+,,,,,,,,80,,,,10,8,Male,20,Range,,,,8,29
+,,,,,,,,18,39,,,10,8,Female,22,Range,,,,9,30
+,,,,,,,,40,49,,,10,8,Female,24,Range,,,,10,32
+,,,,,,,,50,59,,,10,8,Female,26,Range,,,,11,34
+,,,,,,,,60,64,,,10,8,Female,28,Range,,,,12,36
+,,,,,,,,65,69,,,10,8,Female,29,Range,,,,13,37
+,,,,,,,,70,74,,,10,8,Female,30,Range,,,,14,38
+,,,,,,,,75,79,,,10,8,Female,30,Range,,,,15,38
+,,,,,,,,80,,,,10,8,Female,30,Range,,,,16,39
+Waist v1,Waist,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,,,,80.0,,,Male,,Linear-Lower,125.0,90.0,,1,
+,,,,,,,,,,,70.0,,,Female,,Linear-Lower,115.0,80.0,,2,
+BMI v1,BMI,1,,,1,Imported from finalized Club100 XLS benchmark configuration.,,,,,,20.0,10.0,Both,20.0,Range,,,,1,23.0

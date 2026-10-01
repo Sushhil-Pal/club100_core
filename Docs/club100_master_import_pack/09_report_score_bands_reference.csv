@@ -1,0 +1,31 @@
+﻿level,name,band,min_score,max_score,comment
+Overall,Club100 Fitness,Excellent,85,100,You demonstrate a strong overall level of fitness across the assessed areas.
+Overall,Club100 Fitness,Good,70,84.99,"You have a good overall fitness foundation, with some areas that can improve further."
+Overall,Club100 Fitness,Building,55,69.99,"You have a developing fitness foundation, with several opportunities for improvement."
+Overall,Club100 Fitness,Needs Improvement,40,54.99,Several areas of your fitness would benefit from focused improvement.
+Overall,Club100 Fitness,Needs Attention,0,39.99,Building your overall fitness should be an important priority.
+Category,Body Composition,Excellent,85,100,Your body composition indicators are strong overall and are within preferred ranges.
+Category,Body Composition,Good,70,84.99,"Your body composition is generally good, with some areas that can still improve."
+Category,Body Composition,Building,55,69.99,"Your body composition provides a reasonable foundation, but some markers would benefit from improvement."
+Category,Body Composition,Needs Improvement,40,54.99,Several body composition markers are outside the preferred ranges and would benefit from focused improvement.
+Category,Body Composition,Needs Attention,0,39.99,Improving your body composition should be an important focus of your fitness plan.
+Category,Cardiovascular Health,Excellent,85,100,Your cardiovascular fitness indicators are strong overall.
+Category,Cardiovascular Health,Good,70,84.99,"Your cardiovascular fitness is generally good, with some scope for further improvement."
+Category,Cardiovascular Health,Building,55,69.99,"Your cardiovascular fitness is developing, with some indicators that can be improved."
+Category,Cardiovascular Health,Needs Improvement,40,54.99,Your cardiovascular conditioning would benefit from focused and consistent improvement.
+Category,Cardiovascular Health,Needs Attention,0,39.99,Improving cardiovascular fitness should be an important priority in your fitness plan.
+Category,Strength & Endurance,Excellent,85,100,You demonstrate strong overall muscular strength and endurance.
+Category,Strength & Endurance,Good,70,84.99,"You have good overall strength and muscular endurance, with some scope for further improvement."
+Category,Strength & Endurance,Building,55,69.99,"Your strength and muscular endurance are developing, with specific areas that can be improved."
+Category,Strength & Endurance,Needs Improvement,40,54.99,Several aspects of your strength and muscular endurance would benefit from focused training.
+Category,Strength & Endurance,Needs Attention,0,39.99,Building strength and muscular endurance should be an important focus of your fitness program.
+Category,Mobility & Balance,Excellent,85,100,"You demonstrate excellent functional mobility, flexibility and balance."
+Category,Mobility & Balance,Good,70,84.99,"Your mobility and balance are good overall, with some room for further improvement."
+Category,Mobility & Balance,Building,55,69.99,"Your mobility and balance provide a reasonable foundation, with some limitations that can be improved."
+Category,Mobility & Balance,Needs Improvement,40,54.99,Several areas of mobility or balance would benefit from focused improvement.
+Category,Mobility & Balance,Needs Attention,0,39.99,"Improving mobility, flexibility and balance should be an important focus of your fitness plan."
+Category,Well-being & Readiness,Excellent,85,100,"Your energy, recovery, motivation and overall readiness indicators are very positive."
+Category,Well-being & Readiness,Good,70,84.99,"Your overall well-being and readiness are positive, with a few areas that can improve further."
+Category,Well-being & Readiness,Building,55,69.99,"Your well-being and readiness are developing, with some lifestyle or recovery factors that may need attention."
+Category,Well-being & Readiness,Needs Improvement,40,54.99,Several well-being or recovery factors may be limiting your fitness and would benefit from focused improvement.
+Category,Well-being & Readiness,Needs Attention,0,39.99,"Improving recovery, energy and overall well-being should be an important part of your fitness plan."

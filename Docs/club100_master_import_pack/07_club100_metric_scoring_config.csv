@@ -1,0 +1,17 @@
+﻿config_name,metric,version,effective_from,effective_to,active,notes
+BMI v1,BMI,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Waist v1,Waist,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+FAT Ratio v1,FAT Ratio,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Visceral Fat v1,Visceral Fat,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Resting Heart Rate v1,Resting Heart Rate,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Recovery Heart Rate v1,Recovery Heart Rate,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Heart Rate Recovery v1,Heart Rate Recovery,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Blood Pressure v1,Blood Pressure,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Chair Stand v1,Chair Stand,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Wall Sit v1,Wall Sit,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Pushups v1,Pushups,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Plank Hold v1,Plank Hold,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Sit & Reach v1,Sit & Reach,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Shoulder Flexibility v1,Shoulder Flexibility,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Deep Squat v1,Deep Squat,1,,,1,Imported from finalized Club100 XLS benchmark configuration.
+Single Leg Balance v1,Single Leg Balance,1,,,1,Imported from finalized Club100 XLS benchmark configuration.

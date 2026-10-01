@@ -1,0 +1,30 @@
+﻿Metric Name,ID (Inputs),Input (Inputs),Required for Calculation (Inputs),Sequence (Inputs)
+Self-Assessment,,Energy Level,1,1
+,,Stress Level,1,2
+,,Sleep Quality,1,3
+,,Daily Mobility,1,4
+,,Confidence in Fitness,1,5
+,,Motivation,1,6
+,,Overall Well-being,1,7
+Single Leg Balance,,Left Leg Balance,1,1
+,,Right Leg Balance,1,2
+Deep Squat,,Deep Squat,1,1
+Shoulder Flexibility,,Left Shoulder Flexibility,1,1
+,,Right Shoulder Flexibility,1,2
+Sit & Reach,,Sit & Reach,1,1
+Plank Hold,,Plank Hold,1,1
+Pushups,,Push-Up Type,1,1
+,,Push-up Reps,1,2
+Wall Sit,,Wall Sit,1,1
+Chair Stand,,Chair Stand,1,1
+Blood Pressure,,BP Systolic,1,1
+,,BP Diastolic,1,2
+Heart Rate Recovery,,Workout Heart Rate,1,1
+,,Recovery Heart Rate,1,2
+Recovery Heart Rate,,Recovery Heart Rate,1,1
+Resting Heart Rate,,Resting Heart Rate,1,1
+Visceral Fat,,Visceral Fat,1,1
+FAT Ratio,,FAT Ratio,1,1
+Waist,,Waist Circumference,1,1
+BMI,,Height,1,1
+,,Weight,1,2

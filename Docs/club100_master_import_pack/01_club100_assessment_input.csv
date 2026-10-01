@@ -1,0 +1,98 @@
+﻿input_name,input_code,category,result_type,unit,options,description,instructions,equipment_required,online_eligible,offline_eligible,active
+Height,HEIGHT,Body Composition,Number,cm,,Member height.,"Measure height without footwear, standing upright.",Stadiometer or measuring tape,1,1,1
+Weight,WEIGHT,Body Composition,Number,kg,,Member body weight.,Measure using a weighing scale.,Weighing scale,1,1,1
+Waist Circumference,WAIST,Body Composition,Number,cm,,Waist circumference measurement.,Measure waist circumference at the standardized measurement point.,Measuring tape,1,1,1
+FAT Ratio,FAT_RATIO,Body Composition,Number,%,,Body fat percentage / fat ratio.,,Body composition scale/analyser,0,1,1
+Visceral Fat,VISCERAL_FAT,Body Composition,Number,Index,,Visceral fat index.,,Body composition scale/analyser,0,1,1
+BP Systolic,BP_SYS,Cardiovascular Health,Number,mmHg,,Systolic blood pressure.,,Blood pressure monitor,1,1,1
+BP Diastolic,BP_DIA,Cardiovascular Health,Number,mmHg,,Diastolic blood pressure.,,Blood pressure monitor,1,1,1
+Resting Heart Rate,RESTING_HR,Cardiovascular Health,Number,bpm,,Resting heart rate.,,Heart-rate monitor or manual pulse count,1,1,1
+Workout Heart Rate,WORKOUT_HR,Cardiovascular Health,Number,bpm,,Heart rate immediately after workout/step test.,,Heart-rate monitor or manual pulse count,1,1,1
+Recovery Heart Rate,RECOVERY_HR,Cardiovascular Health,Number,bpm,,Heart rate one minute after exercise.,,Heart-rate monitor or manual pulse count,1,1,1
+Chair Stand,CHAIR_STAND,Strength & Endurance,Count,reps,,Chair stands completed in 30 seconds.,,Chair and timer,1,1,1
+Wall Sit,WALL_SIT,Strength & Endurance,Duration,seconds,,Wall sit hold duration.,,Timer,1,1,1
+Push-Up Type,PUSHUP_TYPE,Strength & Endurance,Select,,"Full
+Knee",Push-up variation used.,,None,1,1,1
+Push-up Reps,PUSHUP_REPS,Strength & Endurance,Count,reps,,Push-up repetitions completed.,,None,1,1,1
+Plank Hold,PLANK_HOLD,Strength & Endurance,Duration,seconds,,Plank hold duration.,,Timer,1,1,1
+Sit & Reach,SIT_REACH,Mobility & Balance,Number,cm,,Sit-and-reach distance.,,Measuring scale/tape,1,1,1
+Right Shoulder Flexibility,SHOULDER_RIGHT,Mobility & Balance,Number,cm,,Right shoulder flexibility measurement.,,Measuring tape,1,1,1
+Left Shoulder Flexibility,SHOULDER_LEFT,Mobility & Balance,Number,cm,,Left shoulder flexibility measurement.,,Measuring tape,1,1,1
+Deep Squat,DEEP_SQUAT,Mobility & Balance,Rating,0-5,"0
+1
+2
+3
+4
+5",Deep squat assessment score.,,None,1,1,1
+Left Leg Balance,BALANCE_LEFT,Mobility & Balance,Duration,seconds,,Single-leg balance duration on left leg.,,Timer,1,1,1
+Right Leg Balance,BALANCE_RIGHT,Mobility & Balance,Duration,seconds,,Single-leg balance duration on right leg.,,Timer,1,1,1
+Energy Level,ENERGY_LEVEL,Well-being & Readiness,Rating,1-10,"1
+2
+3
+4
+5
+6
+7
+8
+9
+10",Self-rated energy level.,,None,1,1,1
+Stress Level,STRESS_LEVEL,Well-being & Readiness,Rating,1-10,"1
+2
+3
+4
+5
+6
+7
+8
+9
+10",Self-rated stress level; higher means more stress.,,None,1,1,1
+Sleep Quality,SLEEP_QUALITY,Well-being & Readiness,Rating,1-10,"1
+2
+3
+4
+5
+6
+7
+8
+9
+10",Self-rated sleep quality.,,None,1,1,1
+Daily Mobility,DAILY_MOBILITY,Well-being & Readiness,Rating,1-10,"1
+2
+3
+4
+5
+6
+7
+8
+9
+10",Self-rated daily mobility.,,None,1,1,1
+Confidence in Fitness,FITNESS_CONFIDENCE,Well-being & Readiness,Rating,1-10,"1
+2
+3
+4
+5
+6
+7
+8
+9
+10",Self-rated confidence in fitness.,,None,1,1,1
+Motivation,MOTIVATION,Well-being & Readiness,Rating,1-10,"1
+2
+3
+4
+5
+6
+7
+8
+9
+10",Self-rated motivation.,,None,1,1,1
+Overall Well-being,OVERALL_WELLBEING,Well-being & Readiness,Rating,1-10,"1
+2
+3
+4
+5
+6
+7
+8
+9
+10",Self-rated overall well-being.,,None,1,1,1

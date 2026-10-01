@@ -1,0 +1,152 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:metric_name",
+ "creation": "2026-09-29 14:17:57.622071",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "metric_name",
+  "metric_code",
+  "metric_type",
+  "calculation_method",
+  "category",
+  "result_type",
+  "unit",
+  "direction",
+  "description",
+  "instructions",
+  "equipment_required",
+  "online_eligible",
+  "offline_eligible",
+  "active",
+  "inputs"
+ ],
+ "fields": [
+  {
+   "fieldname": "metric_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Metric Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "metric_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Metric Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Body Composition\nCardiovascular Health\nStrength & Endurance\nMobility & Balance\nWell-being & Readiness",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Result Type",
+   "options": "Number\nDuration\nCount\nYes/No\nRating\nText",
+   "reqd": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Unit"
+  },
+  {
+   "fieldname": "direction",
+   "fieldtype": "Select",
+   "label": "Direction",
+   "options": "Higher is Better\nLower is Better\nRange Based\nNot Scored",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Text",
+   "label": "Instructions"
+  },
+  {
+   "fieldname": "equipment_required",
+   "fieldtype": "Small Text",
+   "label": "Equipment Required"
+  },
+  {
+   "default": "0",
+   "fieldname": "online_eligible",
+   "fieldtype": "Check",
+   "label": "Online Eligible"
+  },
+  {
+   "default": "1",
+   "fieldname": "offline_eligible",
+   "fieldtype": "Check",
+   "label": "Offline Eligible"
+  },
+  {
+   "default": "1",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "inputs",
+   "fieldtype": "Table",
+   "label": "Inputs",
+   "options": "Club100 Fitness Metric Input"
+  },
+  {
+   "fieldname": "metric_type",
+   "fieldtype": "Select",
+   "label": "Metric Type",
+   "options": "Direct\nDerived\nComposite"
+  },
+  {
+   "fieldname": "calculation_method",
+   "fieldtype": "Select",
+   "label": "Calculation Method",
+   "options": "DIRECT\nBMI\nHEART_RATE_RECOVERY\nBILATERAL_70_30\nBLOOD_PRESSURE\nSELF_ASSESSMENT\nPUSHUP_EFFECTIVE_REPS"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-30 23:29:57.143513",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Fitness Metric",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,18 @@
+﻿metric_name,metric_code,category,result_type,unit,direction,metric_type,calculation_method,description,instructions,online_eligible,offline_eligible,active
+BMI,BMI,Body Composition,Number,kg/m²,Range Based,Derived,BMI,,,1,1,1
+Waist,WAIST,Body Composition,Number,cm,Lower is Better,Direct,DIRECT,,,1,1,1
+FAT Ratio,FAT_RATIO,Body Composition,Number,%,Range Based,Direct,DIRECT,,,0,1,1
+Visceral Fat,VISCERAL_FAT,Body Composition,Number,Index,Lower is Better,Direct,DIRECT,,,0,1,1
+Resting Heart Rate,RESTING_HR,Cardiovascular Health,Number,bpm,Lower is Better,Direct,DIRECT,,,1,1,1
+Recovery Heart Rate,RECOVERY_HR,Cardiovascular Health,Number,bpm,Lower is Better,Direct,DIRECT,,,1,1,1
+Heart Rate Recovery,HEART_RATE_RECOVERY,Cardiovascular Health,Number,bpm,Higher is Better,Derived,HEART_RATE_RECOVERY,,,1,1,1
+Blood Pressure,BLOOD_PRESSURE,Cardiovascular Health,Text,mmHg,Range Based,Composite,BLOOD_PRESSURE,,,1,1,1
+Chair Stand,CHAIR_STAND,Strength & Endurance,Count,reps,Higher is Better,Direct,DIRECT,,,1,1,1
+Wall Sit,WALL_SIT,Strength & Endurance,Duration,seconds,Higher is Better,Direct,DIRECT,,,1,1,1
+Pushups,PUSHUPS,Strength & Endurance,Count,effective reps,Higher is Better,Derived,PUSHUP_EFFECTIVE_REPS,,,1,1,1
+Plank Hold,PLANK_HOLD,Strength & Endurance,Duration,seconds,Higher is Better,Direct,DIRECT,,,1,1,1
+Sit & Reach,SIT_REACH,Mobility & Balance,Number,cm,Higher is Better,Direct,DIRECT,,,1,1,1
+Shoulder Flexibility,SHOULDER_FLEX,Mobility & Balance,Text,cm,Higher is Better,Composite,BILATERAL_70_30,,,1,1,1
+Deep Squat,DEEP_SQUAT,Mobility & Balance,Number,0-5,Higher is Better,Direct,DIRECT,,,1,1,1
+Single Leg Balance,SINGLE_LEG_BALANCE,Mobility & Balance,Text,seconds,Higher is Better,Composite,BILATERAL_70_30,,,1,1,1
+Self-Assessment,SELF_ASSESSMENT,Well-being & Readiness,Number,score,Higher is Better,Composite,SELF_ASSESSMENT,,,1,1,1

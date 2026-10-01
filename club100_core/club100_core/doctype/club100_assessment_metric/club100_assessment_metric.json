@@ -7,23 +7,20 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "metric_name",
+  "metric",
   "category",
   "value",
   "text_value",
   "unit",
   "score",
   "rating",
+  "required",
+  "include_in_score",
+  "weight",
+  "instructions",
   "notes"
  ],
  "fields": [
-  {
-   "fieldname": "metric_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Metric",
-   "reqd": 1
-  },
   {
    "fieldname": "category",
    "fieldtype": "Data",
@@ -53,19 +50,54 @@
    "fieldname": "rating",
    "fieldtype": "Select",
    "label": "Rating",
-   "options": "Excellent\nGood\nAverage\nNeeds Improvement"
+   "options": "Excellent\nGood\nBuilding\nNeeds Improvement\nNeeds Attention"
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "metric",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Metric",
+   "options": "Club100 Fitness Metric",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Required",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "include_in_score",
+   "fieldtype": "Check",
+   "label": "Include in Score",
+   "read_only": 1
+  },
+  {
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Weight",
+   "read_only": 1
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Small Text",
+   "label": "Instructions",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-25 16:44:57.697347",
+ "modified": "2026-09-30 21:26:34.275860",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Assessment Metric",

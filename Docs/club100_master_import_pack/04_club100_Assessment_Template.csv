@@ -1,0 +1,18 @@
+﻿Template Name,Template Code,Version,Delivery Mode,Purpose,Is Default,Active,Description,ID (Metrics),Category (Metrics),Include in Score (Metrics),Instructions Override (Metrics),Metric (Metrics),Required (Metrics),Sequence (Metrics),Weight (Metrics),ID (Category Weights),Category (Category Weights),Weight (Category Weights)
+Club100 Standard Assessment,STANDARD,1,Offline,Both,1,1,Standard comprehensive Club100 fitness assessment based on the finalized XLS methodology.,,Body Composition,1,,BMI,1,1,0.25,,Body Composition,0.2
+,,,,,,,,,Body Composition,1,,Waist,1,2,0.4,,Cardiovascular Health,0.2
+,,,,,,,,,Body Composition,1,,FAT Ratio,0,3,0.25,,Strength & Endurance,0.25
+,,,,,,,,,Body Composition,1,,Visceral Fat,0,4,0.1,,Mobility & Balance,0.2
+,,,,,,,,,Cardiovascular Health,1,,Resting Heart Rate,0,5,0.25,,Well-being & Readiness,0.15
+,,,,,,,,,Cardiovascular Health,1,,Recovery Heart Rate,0,6,0.2,,,
+,,,,,,,,,Cardiovascular Health,1,,Heart Rate Recovery,0,7,0.25,,,
+,,,,,,,,,Cardiovascular Health,1,,Blood Pressure,0,8,0.3,,,
+,,,,,,,,,Strength & Endurance,1,,Chair Stand,1,9,0.25,,,
+,,,,,,,,,Strength & Endurance,1,,Wall Sit,1,10,0.25,,,
+,,,,,,,,,Strength & Endurance,1,,Pushups,0,11,0.25,,,
+,,,,,,,,,Strength & Endurance,1,,Plank Hold,1,12,0.25,,,
+,,,,,,,,,Mobility & Balance,1,,Sit & Reach,1,13,0.25,,,
+,,,,,,,,,Mobility & Balance,1,,Shoulder Flexibility,1,14,0.25,,,
+,,,,,,,,,Mobility & Balance,1,,Deep Squat,1,15,0.25,,,
+,,,,,,,,,Mobility & Balance,1,,Single Leg Balance,1,16,0.25,,,
+,,,,,,,,,Well-being & Readiness,1,,Self-Assessment,1,17,1.0,,,
