@@ -103,6 +103,96 @@ def _login_user(user_id, password):
     login_manager.post_login()
 
 
+def _get_member_for_user(user):
+    if not user or user == "Guest":
+        return None
+
+    return frappe.db.get_value(
+        "Club100 Member",
+        {
+            "user": user,
+            "status": "Active",
+            "app_access_status": "Active",
+        },
+        [
+            "name",
+            "full_name",
+            "onboarding_status",
+        ],
+        as_dict=True,
+    )
+
+
+def _get_trainer_for_user(user):
+    if not user or user == "Guest":
+        return None
+
+    return frappe.db.get_value(
+        "Club100 Trainer",
+        {
+            "user": user,
+            "status": "Active",
+        },
+        [
+            "name",
+            "trainer_name",
+            "trainer_type",
+        ],
+        as_dict=True,
+    )
+
+
+def _get_app_user_context(user=None):
+    
+    if user is None:
+        user = frappe.session.user
+
+    if not user or user == "Guest":
+        return {
+            "user": None,
+            "roles": [],
+            "member": None,
+            "trainer": None,
+        }
+
+    member = _get_member_for_user(user)
+    trainer = _get_trainer_for_user(user)
+
+    roles = []
+
+    if member:
+        roles.append("member")
+
+    if trainer:
+        roles.append("trainer")
+
+    return {
+        "user": user,
+        "roles": roles,
+
+        "member": (
+            {
+                "id": member.name,
+                "fullName": member.full_name,
+                "onboardingStatus":
+                    member.onboarding_status
+                    or "Not Started",
+            }
+            if member
+            else None
+        ),
+
+        "trainer": (
+            {
+                "id": trainer.name,
+                "trainerName": trainer.trainer_name,
+                "trainerType": trainer.trainer_type,
+            }
+            if trainer
+            else None
+        ),
+    }
+
 # ---------------------------------------------------------
 # CSRF
 # ---------------------------------------------------------
@@ -264,14 +354,14 @@ def register(
             password,
         )
 
+        context = _get_app_user_context(
+            frappe.session.user
+        )
+
         return {
             "success": True,
             "registrationType": "ExistingMember",
-            "member": {
-                "id": member.name,
-                "fullName": member.full_name,
-            },
-            "user": user.name,
+            **context,
         }
 
     # -----------------------------------------------------
@@ -323,14 +413,14 @@ def register(
         password,
     )
 
+    context = _get_app_user_context(
+        frappe.session.user
+    )
+
     return {
         "success": True,
         "registrationType": "NewMember",
-        "member": {
-            "id": member.name,
-            "fullName": member.full_name,
-        },
-        "user": user.name,
+        **context,
     }
 
 
@@ -343,67 +433,117 @@ def register(
     methods=["POST"],
 )
 def login(
-    mobile,
     password,
+    login_id=None,
+    mobile=None,
 ):
-    if not mobile or not password:
+    login_id = (
+        login_id
+        or mobile
+        or ""
+    ).strip()
+
+    if not login_id or not password:
         frappe.throw(
-            "Mobile number and password are required",
+            "Login ID and password are required",
             frappe.ValidationError,
         )
 
-    mobile = mobile.strip()
+    user_id = None
+
+    # -----------------------------------------------------
+    # 1. Try Club100 Member login by mobile
+    # -----------------------------------------------------
 
     member = frappe.db.get_value(
         "Club100 Member",
         {
-            "mobile": mobile,
+            "mobile": login_id,
             "status": "Active",
         },
         [
             "name",
-            "full_name",
             "user",
             "app_access_status",
-            "onboarding_status",
         ],
         as_dict=True,
     )
 
     if (
-        not member
-        or not member.user
-        or member.app_access_status != "Active"
+        member
+        and member.user
+        and member.app_access_status == "Active"
     ):
+        user_id = member.user
+
+    # -----------------------------------------------------
+    # 2. Try Club100 Trainer login
+    # -----------------------------------------------------
+
+    if not user_id:
+        trainer = frappe.db.get_value(
+            "Club100 Trainer",
+            {
+                "mobile": login_id,
+                "status": "Active",
+            },
+            [
+                "name",
+                "user",
+            ],
+            as_dict=True,
+        )
+
+        if not trainer:
+            trainer = frappe.db.get_value(
+                "Club100 Trainer",
+                {
+                    "email": login_id,
+                    "status": "Active",
+                },
+                [
+                    "name",
+                    "user",
+                ],
+                as_dict=True,
+            )
+
+        if trainer and trainer.user:
+            user_id = trainer.user
+
+    if not user_id:
         frappe.throw(
-            "Invalid mobile number or password",
+            "Invalid login ID or password",
             frappe.AuthenticationError,
         )
 
     try:
         _login_user(
-            member.user,
+            user_id,
             password,
         )
 
     except frappe.AuthenticationError:
         frappe.throw(
-            "Invalid mobile number or password",
+            "Invalid login ID or password",
+            frappe.AuthenticationError,
+        )
+
+    context = _get_app_user_context(
+        frappe.session.user
+    )
+
+    if not context["roles"]:
+        frappe.local.login_manager.logout()
+
+        frappe.throw(
+            "This account does not have Club100 app access.",
             frappe.AuthenticationError,
         )
 
     return {
         "success": True,
-
-        "member": {
-            "id": member.name,
-            "fullName": member.full_name,
-            "onboardingStatus":
-                member.onboarding_status
-                or "Not Started",
-        },
-
-        "user": frappe.session.user,
+        **context,
     }
 
 
@@ -418,16 +558,20 @@ def login(
 def session_status():
     user = frappe.session.user
 
-    return {
-        "authenticated": (
-            user != "Guest"
-        ),
+    if user == "Guest":
+        return {
+            "authenticated": False,
+            "user": None,
+            "roles": [],
+            "member": None,
+            "trainer": None,
+        }
 
-        "user": (
-            None
-            if user == "Guest"
-            else user
-        ),
+    context = _get_app_user_context(user)
+
+    return {
+        "authenticated": True,
+        **context,
     }
 
 
