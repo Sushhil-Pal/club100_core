@@ -124,63 +124,167 @@ def member_detail(member_id):
             frappe.DoesNotExistError,
         )
 
-    latest_assessment = frappe.db.get_value(
+    # ---------------------------------------------------------
+    # Completed assessments
+    # ---------------------------------------------------------
+
+    completed_rows = frappe.get_all(
         "Club100 Assessment",
-        {
+        filters={
             "member": member.name,
             "status": "Completed",
         },
-        [
+        fields=[
             "name",
             "assessment_type",
             "assessment_date",
             "fitness_score",
             "fitness_level",
+            "creation",
         ],
-        order_by="assessment_date desc, creation desc",
-        as_dict=True,
+        order_by=(
+            "assessment_date desc, "
+            "creation desc"
+        ),
     )
 
-    assessment_count = frappe.db.count(
+    assessment_history = []
+
+    for index, row in enumerate(
+        completed_rows
+    ):
+        previous_score = None
+        score_change = None
+
+        previous_index = index + 1
+
+        if previous_index < len(
+            completed_rows
+        ):
+            previous_score = (
+                completed_rows[
+                    previous_index
+                ].fitness_score
+            )
+
+        if (
+            row.fitness_score is not None
+            and previous_score is not None
+        ):
+            score_change = round(
+                row.fitness_score
+                - previous_score
+            )
+
+        assessment_history.append({
+            "id":
+                row.name,
+
+            "type":
+                row.assessment_type,
+
+            "date":
+                row.assessment_date,
+
+            "fitnessScore":
+                row.fitness_score,
+
+            "fitnessLevel":
+                row.fitness_level,
+
+            "scoreChange":
+                score_change,
+        })
+
+    latest_assessment = (
+        assessment_history[0]
+        if assessment_history
+        else None
+    )
+
+    # ---------------------------------------------------------
+    # Draft assessment
+    # ---------------------------------------------------------
+
+    draft_row = frappe.db.get_value(
         "Club100 Assessment",
         {
             "member": member.name,
-            "status": "Completed",
+            "status": "Draft",
         },
+        [
+            "name",
+            "assessment_type",
+            "assessment_date",
+            "modified",
+        ],
+        order_by="modified desc",
+        as_dict=True,
     )
+
+    draft_assessment = (
+        {
+            "id":
+                draft_row.name,
+
+            "type":
+                draft_row.assessment_type,
+
+            "date":
+                draft_row.assessment_date,
+
+            "modified":
+                draft_row.modified,
+        }
+        if draft_row
+        else None
+    )
+
+    # ---------------------------------------------------------
+    # Response
+    # ---------------------------------------------------------
 
     return {
         "member": {
-            "id": member.name,
-            "fullName": member.full_name,
-            "mobile": member.mobile,
-            "email": member.email,
-            "gender": member.gender,
-            "dateOfBirth": member.date_of_birth,
-            "joiningDate": member.joining_date,
+            "id":
+                member.name,
+
+            "fullName":
+                member.full_name,
+
+            "mobile":
+                member.mobile,
+
+            "email":
+                member.email,
+
+            "gender":
+                member.gender,
+
+            "dateOfBirth":
+                member.date_of_birth,
+
+            "joiningDate":
+                member.joining_date,
+
             "onboardingStatus":
                 member.onboarding_status
                 or "Not Started",
         },
 
-        "latestAssessment": (
-            {
-                "id": latest_assessment.name,
-                "type":
-                    latest_assessment.assessment_type,
-                "date":
-                    latest_assessment.assessment_date,
-                "fitnessScore":
-                    latest_assessment.fitness_score,
-                "fitnessLevel":
-                    latest_assessment.fitness_level,
-            }
-            if latest_assessment
-            else None
-        ),
+        "latestAssessment":
+            latest_assessment,
 
         "assessmentCount":
-            assessment_count,
+            len(
+                assessment_history
+            ),
+
+        "assessmentHistory":
+            assessment_history,
+
+        "draftAssessment":
+            draft_assessment,
     }
 
 @frappe.whitelist(methods=["POST"])
