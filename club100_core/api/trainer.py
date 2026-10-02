@@ -641,6 +641,10 @@ def assessment_result(assessment_id):
         as_dict=True,
     )
 
+    # ---------------------------------------------------------
+    # Current category scores
+    # ---------------------------------------------------------
+
     categories = []
 
     for row in doc.category_scores:
@@ -653,6 +657,10 @@ def assessment_result(assessment_id):
                     row.metrics_scored,
             }
         )
+
+    # ---------------------------------------------------------
+    # Current metric results
+    # ---------------------------------------------------------
 
     metrics = []
 
@@ -669,41 +677,213 @@ def assessment_result(assessment_id):
                 "metricName":
                     metric_name
                     or row.metric,
+
                 "category":
                     row.category,
+
                 "value":
                     row.value,
+
                 "textValue":
                     row.text_value,
+
                 "unit":
                     row.unit,
+
                 "score":
                     row.score,
+
                 "rating":
                     row.rating,
+
                 "required":
-                    bool(row.required),
+                    bool(
+                        row.required
+                    ),
+
                 "includeInScore":
                     bool(
                         row.include_in_score
                     ),
+
                 "weight":
                     row.weight,
+
                 "notes":
                     row.notes,
             }
         )
 
+    # ---------------------------------------------------------
+    # Find immediately previous completed assessment
+    # ---------------------------------------------------------
+
+    completed_assessments = frappe.get_all(
+        "Club100 Assessment",
+        filters={
+            "member": doc.member,
+            "status": "Completed",
+        },
+        fields=[
+            "name",
+            "assessment_date",
+            "creation",
+            "fitness_score",
+            "fitness_level",
+            "assessment_type",
+        ],
+        order_by=(
+            "assessment_date desc, "
+            "creation desc"
+        ),
+    )
+
+    previous = None
+
+    for index, item in enumerate(
+        completed_assessments
+    ):
+        if item.name != doc.name:
+            continue
+
+        previous_index = (
+            index + 1
+        )
+
+        if (
+            previous_index
+            < len(
+                completed_assessments
+            )
+        ):
+            previous = (
+                completed_assessments[
+                    previous_index
+                ]
+            )
+
+        break
+
+    # ---------------------------------------------------------
+    # Previous assessment
+    # ---------------------------------------------------------
+
+    previous_assessment = None
+
+    if previous:
+        previous_doc = frappe.get_doc(
+            "Club100 Assessment",
+            previous.name,
+        )
+
+        # Previous categories
+
+        previous_categories = []
+
+        for row in (
+            previous_doc.category_scores
+        ):
+            previous_categories.append(
+                {
+                    "category":
+                        row.category,
+
+                    "score":
+                        row.score,
+                }
+            )
+
+        # Previous metrics
+
+        previous_metrics = []
+
+        for row in (
+            previous_doc.metrics
+        ):
+            metric_name = (
+                frappe.db.get_value(
+                    "Club100 Fitness Metric",
+                    row.metric,
+                    "metric_name",
+                )
+            )
+
+            previous_metrics.append(
+                {
+                    "metric":
+                        row.metric,
+
+                    "metricName":
+                        metric_name
+                        or row.metric,
+
+                    "category":
+                        row.category,
+
+                    "value":
+                        row.value,
+
+                    "textValue":
+                        row.text_value,
+
+                    "unit":
+                        row.unit,
+
+                    "score":
+                        row.score,
+
+                    "rating":
+                        row.rating,
+
+                    "includeInScore":
+                        bool(
+                            row.include_in_score
+                        ),
+                }
+            )
+
+        previous_assessment = {
+            "id":
+                previous.name,
+
+            "assessmentType":
+                previous.assessment_type,
+
+            "assessmentDate":
+                previous.assessment_date,
+
+            "fitnessScore":
+                previous.fitness_score,
+
+            "fitnessLevel":
+                previous.fitness_level,
+
+            "categories":
+                previous_categories,
+
+            "metrics":
+                previous_metrics,
+        }
+
+    # ---------------------------------------------------------
+    # Response
+    # ---------------------------------------------------------
+
     return {
         "assessment": {
-            "id": doc.name,
+            "id":
+                doc.name,
 
             "member": {
-                "id": member.name,
+                "id":
+                    member.name,
+
                 "fullName":
                     member.full_name,
+
                 "gender":
                     member.gender,
+
                 "dateOfBirth":
                     member.date_of_birth,
             },
@@ -731,6 +911,9 @@ def assessment_result(assessment_id):
 
             "metrics":
                 metrics,
+
+            "previousAssessment":
+                previous_assessment,
         }
     }
 
