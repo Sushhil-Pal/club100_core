@@ -1361,23 +1361,48 @@ def session_detail(session_id):
     )
 
     # ---------------------------------------------------------
-    # Active cohort enrollments
+    # Enrollments valid on the session date
     # ---------------------------------------------------------
 
-    enrollments = frappe.get_all(
+    enrollment_rows = frappe.get_all(
         "Club100 Enrollment",
         filters={
             "cohort":
                 session.cohort,
+
             "status":
-                "Active",
+                ["!=", "Cancelled"],
         },
         fields=[
             "name",
             "member",
+            "start_date",
+            "end_date",
+            "status",
         ],
         order_by="creation asc",
     )
+
+    enrollments = []
+
+    for row in enrollment_rows:
+        if (
+            row.start_date
+            and row.start_date
+            > session.session_date
+        ):
+            continue
+
+        if (
+            row.end_date
+            and row.end_date
+            < session.session_date
+        ):
+            continue
+
+        enrollments.append(
+            row
+        )
 
     member_ids = [
         row.member
@@ -1566,6 +1591,7 @@ def session_detail(session_id):
         }
     }
 
+
 @frappe.whitelist(methods=["POST"])
 def save_session_attendance(
     session_id,
@@ -1608,6 +1634,12 @@ def save_session_attendance(
             frappe.PermissionError,
         )
 
+    if session.status != "Live":
+        frappe.throw(
+            "Attendance can only be updated while the session is live.",
+            frappe.ValidationError,
+        )
+
     if session.status == "Cancelled":
         frappe.throw(
             "Attendance cannot be updated for a cancelled session.",
@@ -1620,19 +1652,47 @@ def save_session_attendance(
         "Absent",
     }
 
-    # Members currently enrolled in cohort
-    valid_members = set(
-        frappe.get_all(
-            "Club100 Enrollment",
-            filters={
-                "cohort":
-                    session.cohort,
-                "status":
-                    "Active",
-            },
-            pluck="member",
-        )
+    # ---------------------------------------------------------
+    # Members enrolled on the session date
+    # ---------------------------------------------------------
+
+    enrollment_rows = frappe.get_all(
+        "Club100 Enrollment",
+        filters={
+            "cohort":
+                session.cohort,
+
+            "status":
+                ["!=", "Cancelled"],
+        },
+        fields=[
+            "member",
+            "start_date",
+            "end_date",
+        ],
     )
+
+    valid_members = set()
+
+    for row in enrollment_rows:
+        if (
+            row.start_date
+            and row.start_date
+            > session.session_date
+        ):
+            continue
+
+        if (
+            row.end_date
+            and row.end_date
+            < session.session_date
+        ):
+            continue
+
+        if row.member:
+            valid_members.add(
+                row.member
+            )
 
     saved = 0
 
@@ -1661,8 +1721,9 @@ def save_session_attendance(
         ):
             frappe.throw(
                 f"Member {member_id} "
-                "is not actively enrolled "
-                "in this session cohort.",
+                "was not enrolled in this "
+                "session cohort on the "
+                "session date.",
                 frappe.ValidationError,
             )
 
@@ -1758,25 +1819,59 @@ def complete_session(session_id):
             frappe.PermissionError,
         )
 
+    if session.status != "Live":
+        frappe.throw(
+            "Only a live session can be completed.",
+            frappe.ValidationError,
+        )
+
     if session.status == "Cancelled":
         frappe.throw(
             "A cancelled session cannot be completed.",
             frappe.ValidationError,
         )
 
-    active_members = set(
-        frappe.get_all(
-            "Club100 Enrollment",
-            filters={
-                "cohort":
-                    session.cohort,
+    # ---------------------------------------------------------
+    # Members enrolled on the session date
+    # ---------------------------------------------------------
 
-                "status":
-                    "Active",
-            },
-            pluck="member",
-        )
+    enrollment_rows = frappe.get_all(
+        "Club100 Enrollment",
+        filters={
+            "cohort":
+                session.cohort,
+
+            "status":
+                ["!=", "Cancelled"],
+        },
+        fields=[
+            "member",
+            "start_date",
+            "end_date",
+        ],
     )
+
+    session_members = set()
+
+    for row in enrollment_rows:
+        if (
+            row.start_date
+            and row.start_date
+            > session.session_date
+        ):
+            continue
+
+        if (
+            row.end_date
+            and row.end_date
+            < session.session_date
+        ):
+            continue
+
+        if row.member:
+            session_members.add(
+                row.member
+            )
 
     attendance_members = set(
         frappe.get_all(
@@ -1790,7 +1885,7 @@ def complete_session(session_id):
     )
 
     missing = (
-        active_members
+        session_members
         - attendance_members
     )
 
@@ -1814,6 +1909,7 @@ def complete_session(session_id):
 
     return {
         "success": True,
+
         "session": {
             "id":
                 session.name,
@@ -2095,4 +2191,406 @@ def today():
 
         "draftAssessments":
             draft_assessments,
+    }
+
+@frappe.whitelist(methods=["GET"])
+def profile():
+    trainer_ref = _require_trainer()
+
+    trainer = frappe.get_doc(
+        "Club100 Trainer",
+        trainer_ref.name,
+    )
+
+    return {
+        "trainer": {
+            "id":
+                trainer.name,
+
+            "trainerName":
+                trainer.trainer_name,
+
+            "email":
+                trainer.email,
+
+            "mobile":
+                trainer.mobile,
+
+            "trainerType":
+                trainer.trainer_type,
+
+            "status":
+                trainer.status,
+
+            "photo":
+                trainer.profile_photo,
+
+            "bio":
+                trainer.bio,
+
+            "certifications":
+                trainer.certifications,
+
+            "location":
+                trainer.primary_location,
+
+            "onlineEligible":
+                bool(
+                    trainer.can_deliver_online
+                ),
+
+            "offlineEligible":
+                bool(
+                    trainer.can_deliver_offline
+                ),
+
+            "maxOnlineCohortSize":
+                trainer.max_online_cohort_size,
+
+            "employee":
+                trainer.employee,
+
+            "user":
+                trainer.user,
+        }
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def update_profile(
+    mobile=None,
+    email=None,
+    bio=None,
+    certifications=None,
+    location=None,
+):
+    trainer_ref = _require_trainer()
+
+    trainer = frappe.get_doc(
+        "Club100 Trainer",
+        trainer_ref.name,
+    )
+
+    # ---------------------------------------------------------
+    # Mobile
+    # ---------------------------------------------------------
+
+    if mobile is not None:
+        mobile = (
+            str(mobile).strip()
+        )
+
+        if not mobile:
+            frappe.throw(
+                "Mobile is required.",
+                frappe.ValidationError,
+            )
+
+        trainer.mobile = mobile
+
+    # ---------------------------------------------------------
+    # Email
+    # ---------------------------------------------------------
+
+    if email is not None:
+        email = (
+            str(email).strip()
+        )
+
+        if not email:
+            frappe.throw(
+                "Email is required.",
+                frappe.ValidationError,
+            )
+
+        if not frappe.utils.validate_email_address(
+            email
+        ):
+            frappe.throw(
+                "Please enter a valid email address.",
+                frappe.ValidationError,
+            )
+
+        trainer.email = email
+
+    # ---------------------------------------------------------
+    # Bio
+    # ---------------------------------------------------------
+
+    if bio is not None:
+        trainer.bio = (
+            str(bio).strip()
+            or None
+        )
+
+    # ---------------------------------------------------------
+    # Certifications
+    # ---------------------------------------------------------
+
+    if certifications is not None:
+        trainer.certifications = (
+            str(
+                certifications
+            ).strip()
+            or None
+        )
+
+    # ---------------------------------------------------------
+    # Primary Location
+    # ---------------------------------------------------------
+
+    if location is not None:
+        trainer.primary_location = (
+            str(location).strip()
+            or None
+        )
+
+    trainer.save(
+        ignore_permissions=True
+    )
+
+    return {
+        "success": True,
+
+        "trainer": {
+            "id":
+                trainer.name,
+
+            "trainerName":
+                trainer.trainer_name,
+
+            "email":
+                trainer.email,
+
+            "mobile":
+                trainer.mobile,
+
+            "trainerType":
+                trainer.trainer_type,
+
+            "status":
+                trainer.status,
+
+            "photo":
+                trainer.profile_photo,
+
+            "bio":
+                trainer.bio,
+
+            "certifications":
+                trainer.certifications,
+
+            "location":
+                trainer.primary_location,
+
+            "onlineEligible":
+                bool(
+                    trainer.can_deliver_online
+                ),
+
+            "offlineEligible":
+                bool(
+                    trainer.can_deliver_offline
+                ),
+
+            "maxOnlineCohortSize":
+                trainer.max_online_cohort_size,
+
+            "employee":
+                trainer.employee,
+
+            "user":
+                trainer.user,
+        },
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_profile_photo():
+    trainer_ref = _require_trainer()
+
+    trainer = frappe.get_doc(
+        "Club100 Trainer",
+        trainer_ref.name,
+    )
+
+    uploaded_file = (
+        frappe.request.files.get(
+            "file"
+        )
+    )
+
+    if not uploaded_file:
+        frappe.throw(
+            "Please select an image to upload.",
+            frappe.ValidationError,
+        )
+
+    # ---------------------------------------------------------
+    # Validate content type
+    # ---------------------------------------------------------
+
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+
+    content_type = (
+        uploaded_file.content_type
+        or ""
+    ).lower()
+
+    if content_type not in allowed_types:
+        frappe.throw(
+            "Profile photo must be a JPEG, PNG or WebP image.",
+            frappe.ValidationError,
+        )
+
+    # ---------------------------------------------------------
+    # Read and validate file size
+    # ---------------------------------------------------------
+
+    content = uploaded_file.read()
+
+    max_size = (
+        5 * 1024 * 1024
+    )
+
+    if len(content) > max_size:
+        frappe.throw(
+            "Profile photo must be smaller than 5 MB.",
+            frappe.ValidationError,
+        )
+
+    if not content:
+        frappe.throw(
+            "Uploaded image is empty.",
+            frappe.ValidationError,
+        )
+
+    # ---------------------------------------------------------
+    # Save File attached to Trainer
+    # ---------------------------------------------------------
+
+    from frappe.utils.file_manager import save_file
+
+    file_doc = save_file(
+        uploaded_file.filename,
+        content,
+        "Club100 Trainer",
+        trainer.name,
+        is_private=0,
+    )
+
+    # Actual Club100 Trainer field:
+    # profile_photo
+
+    trainer.profile_photo = (
+        file_doc.file_url
+    )
+
+    trainer.save(
+        ignore_permissions=True
+    )
+
+    return {
+        "success": True,
+
+        "photo":
+            trainer.profile_photo,
+    }
+
+@frappe.whitelist(methods=["POST"])
+def start_session(session_id):
+    trainer = _require_trainer()
+
+    session_id = (
+        session_id or ""
+    ).strip()
+
+    if not session_id:
+        frappe.throw(
+            "Session ID is required.",
+            frappe.ValidationError,
+        )
+
+    session = frappe.get_doc(
+        "Club100 Session",
+        session_id,
+    )
+
+    if session.trainer != trainer.name:
+        frappe.throw(
+            "You cannot start this session.",
+            frappe.PermissionError,
+        )
+
+    if session.status != "Scheduled":
+        frappe.throw(
+            "Only a scheduled session can be started.",
+            frappe.ValidationError,
+        )
+
+    session.status = "Live"
+
+    session.save(
+        ignore_permissions=True
+    )
+
+    return {
+        "success": True,
+        "session": {
+            "id": session.name,
+            "status": session.status,
+        },
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def cancel_session(session_id):
+    trainer = _require_trainer()
+
+    session_id = (
+        session_id or ""
+    ).strip()
+
+    if not session_id:
+        frappe.throw(
+            "Session ID is required.",
+            frappe.ValidationError,
+        )
+
+    session = frappe.get_doc(
+        "Club100 Session",
+        session_id,
+    )
+
+    if session.trainer != trainer.name:
+        frappe.throw(
+            "You cannot cancel this session.",
+            frappe.PermissionError,
+        )
+
+    if session.status not in (
+        "Scheduled",
+        "Live",
+    ):
+        frappe.throw(
+            "Only a scheduled or live session can be cancelled.",
+            frappe.ValidationError,
+        )
+
+    session.status = "Cancelled"
+
+    session.save(
+        ignore_permissions=True
+    )
+
+    return {
+        "success": True,
+        "session": {
+            "id": session.name,
+            "status": session.status,
+        },
     }

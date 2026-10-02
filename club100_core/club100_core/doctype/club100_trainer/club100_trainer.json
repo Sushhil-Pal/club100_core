@@ -74,11 +74,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "profile_photo",
-   "fieldtype": "Attach Image",
-   "label": "Profile Photo"
-  },
-  {
    "fieldname": "bio",
    "fieldtype": "Text Editor",
    "label": "Bio"
@@ -101,11 +96,6 @@
    "label": "Can Deliver Offline"
   },
   {
-   "fieldname": "primary_location",
-   "fieldtype": "Data",
-   "label": "Primary Location"
-  },
-  {
    "default": "25",
    "fieldname": "max_online_cohort_size",
    "fieldtype": "Int",
@@ -115,12 +105,22 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "profile_photo",
+   "fieldtype": "Attach Image",
+   "label": "Profile Photo"
+  },
+  {
+   "fieldname": "primary_location",
+   "fieldtype": "Data",
+   "label": "Primary Location"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 14:51:06.855115",
+ "modified": "2026-10-02 21:54:32.511324",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Trainer",
