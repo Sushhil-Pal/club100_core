@@ -186,12 +186,13 @@ def member_detail(member_id):
 @frappe.whitelist(methods=["POST"])
 def start_assessment(
     member_id,
-    assessment_type="Baseline",
     delivery_mode="Offline",
 ):
     trainer = _require_trainer()
 
-    member_id = (member_id or "").strip()
+    member_id = (
+        member_id or ""
+    ).strip()
 
     if not member_id:
         frappe.throw(
@@ -211,6 +212,68 @@ def start_assessment(
             frappe.DoesNotExistError,
         )
 
+    # -----------------------------------------
+    # Resume existing draft
+    # -----------------------------------------
+
+    existing_draft = frappe.db.get_value(
+        "Club100 Assessment",
+        {
+            "member": member_id,
+            "assessor": trainer.name,
+            "status": "Draft",
+        },
+        [
+            "name",
+            "assessment_type",
+            "assessment_date",
+            "template",
+        ],
+        order_by="modified desc",
+        as_dict=True,
+    )
+
+    if existing_draft:
+        return {
+            "assessment": {
+                "id":
+                    existing_draft.name,
+                "member":
+                    member_id,
+                "status":
+                    "Draft",
+                "assessmentType":
+                    existing_draft.assessment_type,
+                "assessmentDate":
+                    existing_draft.assessment_date,
+                "template":
+                    existing_draft.template,
+            },
+            "resumed": True,
+        }
+
+    # -----------------------------------------
+    # Baseline vs Reassessment
+    # -----------------------------------------
+
+    completed_count = frappe.db.count(
+        "Club100 Assessment",
+        {
+            "member": member_id,
+            "status": "Completed",
+        },
+    )
+
+    assessment_type = (
+        "Reassessment"
+        if completed_count > 0
+        else "Baseline"
+    )
+
+    # -----------------------------------------
+    # Default template
+    # -----------------------------------------
+
     template = frappe.db.get_value(
         "Club100 Assessment Template",
         {
@@ -226,30 +289,55 @@ def start_assessment(
             frappe.ValidationError,
         )
 
+    # -----------------------------------------
+    # Create assessment
+    # -----------------------------------------
+
     doc = frappe.get_doc(
         {
-            "doctype": "Club100 Assessment",
-            "member": member_id,
-            "assessment_type": assessment_type,
-            "assessment_date": frappe.utils.today(),
-            "assessor": trainer.name,
-            "delivery_mode": delivery_mode,
-            "template": template,
-            "status": "Draft",
+            "doctype":
+                "Club100 Assessment",
+
+            "member":
+                member_id,
+
+            "assessment_type":
+                assessment_type,
+
+            "assessment_date":
+                frappe.utils.today(),
+
+            "assessor":
+                trainer.name,
+
+            "delivery_mode":
+                delivery_mode,
+
+            "template":
+                template,
+
+            "status":
+                "Draft",
         }
     )
 
-    doc.insert(ignore_permissions=True)
+    doc.insert(
+        ignore_permissions=True
+    )
 
     return {
         "assessment": {
             "id": doc.name,
             "member": doc.member,
             "status": doc.status,
-            "assessmentType": doc.assessment_type,
-            "assessmentDate": doc.assessment_date,
-            "template": doc.template,
-        }
+            "assessmentType":
+                doc.assessment_type,
+            "assessmentDate":
+                doc.assessment_date,
+            "template":
+                doc.template,
+        },
+        "resumed": False,
     }
 
 @frappe.whitelist(methods=["GET"])
@@ -505,4 +593,274 @@ def save_assessment(
             "fitnessLevel":
                 doc.fitness_level,
         },
+    }
+
+@frappe.whitelist(methods=["GET"])
+def assessment_result(assessment_id):
+    trainer = _require_trainer()
+
+    assessment_id = (
+        assessment_id or ""
+    ).strip()
+
+    if not assessment_id:
+        frappe.throw(
+            "Assessment ID is required",
+            frappe.ValidationError,
+        )
+
+    if not frappe.db.exists(
+        "Club100 Assessment",
+        assessment_id,
+    ):
+        frappe.throw(
+            "Assessment not found",
+            frappe.DoesNotExistError,
+        )
+
+    doc = frappe.get_doc(
+        "Club100 Assessment",
+        assessment_id,
+    )
+
+    if doc.assessor != trainer.name:
+        frappe.throw(
+            "You cannot view this assessment.",
+            frappe.PermissionError,
+        )
+
+    member = frappe.db.get_value(
+        "Club100 Member",
+        doc.member,
+        [
+            "name",
+            "full_name",
+            "gender",
+            "date_of_birth",
+        ],
+        as_dict=True,
+    )
+
+    categories = []
+
+    for row in doc.category_scores:
+        categories.append(
+            {
+                "category": row.category,
+                "score": row.score,
+                "weight": row.weight,
+                "metricsScored":
+                    row.metrics_scored,
+            }
+        )
+
+    metrics = []
+
+    for row in doc.metrics:
+        metric_name = frappe.db.get_value(
+            "Club100 Fitness Metric",
+            row.metric,
+            "metric_name",
+        )
+
+        metrics.append(
+            {
+                "metric": row.metric,
+                "metricName":
+                    metric_name
+                    or row.metric,
+                "category":
+                    row.category,
+                "value":
+                    row.value,
+                "textValue":
+                    row.text_value,
+                "unit":
+                    row.unit,
+                "score":
+                    row.score,
+                "rating":
+                    row.rating,
+                "required":
+                    bool(row.required),
+                "includeInScore":
+                    bool(
+                        row.include_in_score
+                    ),
+                "weight":
+                    row.weight,
+                "notes":
+                    row.notes,
+            }
+        )
+
+    return {
+        "assessment": {
+            "id": doc.name,
+
+            "member": {
+                "id": member.name,
+                "fullName":
+                    member.full_name,
+                "gender":
+                    member.gender,
+                "dateOfBirth":
+                    member.date_of_birth,
+            },
+
+            "assessmentType":
+                doc.assessment_type,
+
+            "assessmentDate":
+                doc.assessment_date,
+
+            "deliveryMode":
+                doc.delivery_mode,
+
+            "status":
+                doc.status,
+
+            "fitnessScore":
+                doc.fitness_score,
+
+            "fitnessLevel":
+                doc.fitness_level,
+
+            "categories":
+                categories,
+
+            "metrics":
+                metrics,
+        }
+    }
+
+@frappe.whitelist(methods=["GET"])
+def assessments(search=None, status=None):
+    trainer = _require_trainer()
+
+    search = (search or "").strip()
+    status = (status or "").strip()
+
+    filters = {
+        "assessor": trainer.name,
+    }
+
+    if status in (
+        "Draft",
+        "Completed",
+    ):
+        filters["status"] = status
+
+    rows = frappe.get_all(
+        "Club100 Assessment",
+        filters=filters,
+        fields=[
+            "name",
+            "member",
+            "assessment_type",
+            "assessment_date",
+            "delivery_mode",
+            "status",
+            "fitness_score",
+            "fitness_level",
+            "modified",
+        ],
+        order_by=(
+            "assessment_date desc, "
+            "modified desc"
+        ),
+        limit_page_length=50,
+    )
+
+    member_ids = list({
+        row.member
+        for row in rows
+        if row.member
+    })
+
+    member_names = {}
+
+    if member_ids:
+        members = frappe.get_all(
+            "Club100 Member",
+            filters={
+                "name": [
+                    "in",
+                    member_ids,
+                ],
+            },
+            fields=[
+                "name",
+                "full_name",
+                "mobile",
+            ],
+        )
+
+        member_names = {
+            row.name: {
+                "fullName":
+                    row.full_name,
+                "mobile":
+                    row.mobile,
+            }
+            for row in members
+        }
+
+    result = []
+
+    for row in rows:
+        member = member_names.get(
+            row.member,
+            {},
+        )
+
+        if search:
+            haystack = " ".join([
+                row.name or "",
+                row.member or "",
+                member.get(
+                    "fullName",
+                    "",
+                ) or "",
+                member.get(
+                    "mobile",
+                    "",
+                ) or "",
+            ]).lower()
+
+            if search.lower() not in haystack:
+                continue
+
+        result.append(
+            {
+                "id": row.name,
+                "member": {
+                    "id": row.member,
+                    "fullName":
+                        member.get(
+                            "fullName"
+                        )
+                        or row.member,
+                    "mobile":
+                        member.get(
+                            "mobile"
+                        ),
+                },
+                "assessmentType":
+                    row.assessment_type,
+                "assessmentDate":
+                    row.assessment_date,
+                "deliveryMode":
+                    row.delivery_mode,
+                "status":
+                    row.status,
+                "fitnessScore":
+                    row.fitness_score,
+                "fitnessLevel":
+                    row.fitness_level,
+            }
+        )
+
+    return {
+        "assessments": result,
     }

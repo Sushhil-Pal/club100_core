@@ -239,6 +239,9 @@ class Club100Assessment(Document):
 
         Required inputs become mandatory only when the assessment
         is being marked Completed.
+
+        is_entered is the source of truth because numeric fields
+        are stored as 0 even when the trainer has not entered them.
         """
 
         if self.status != "Completed":
@@ -250,36 +253,15 @@ class Club100Assessment(Document):
             if not row.required:
                 continue
 
-            result_type = (row.result_type or "").strip()
-
-            if result_type in (
-                "Select",
-                "Text",
-                "Yes-No",
-            ):
-                has_value = row.text_value not in (
-                    None,
-                    "",
-                )
-            else:
-                has_value = row.value not in (
-                    None,
-                    "",
-                )
-
-            if not has_value:
-                missing.append(
-                    row.input_name or row.input
-                )
+            if not row.is_entered:
+                missing.append(row.input_name or row.input)
 
         if missing:
             frappe.throw(
                 "The following required assessment inputs "
                 "must be completed before marking the "
                 "assessment as Completed:<br><br>"
-                + "<br>".join(
-                    f"• {name}" for name in missing
-                )
+                + "<br>".join(f"• {name}" for name in missing)
             )
 
     # =========================================================
@@ -350,8 +332,8 @@ class Club100Assessment(Document):
         """
         Build a lookup keyed by Assessment Input code.
 
-        Using input_code rather than the document name keeps the
-        calculation engine independent of labels displayed to trainers.
+        is_entered is carried with each value so that an untouched
+        numeric field stored as 0 is not mistaken for genuine input.
         """
 
         result = {}
@@ -383,6 +365,9 @@ class Club100Assessment(Document):
                 "value": row.value,
                 "text_value": row.text_value,
                 "name": input_doc.input_name,
+                "is_entered": bool(
+                    row.is_entered
+                ),
             }
 
         return result
@@ -392,12 +377,21 @@ class Club100Assessment(Document):
         input_values,
         input_code,
     ):
-        data = input_values.get(input_code)
+        data = input_values.get(
+            input_code
+        )
 
         if not data:
             return None
 
-        value = data.get("value")
+        if not data.get(
+            "is_entered"
+        ):
+            return None
+
+        value = data.get(
+            "value"
+        )
 
         if value in (
             None,
@@ -412,12 +406,21 @@ class Club100Assessment(Document):
         input_values,
         input_code,
     ):
-        data = input_values.get(input_code)
+        data = input_values.get(
+            input_code
+        )
 
         if not data:
             return None
 
-        value = data.get("text_value")
+        if not data.get(
+            "is_entered"
+        ):
+            return None
+
+        value = data.get(
+            "text_value"
+        )
 
         if value in (
             None,
@@ -425,7 +428,9 @@ class Club100Assessment(Document):
         ):
             return None
 
-        return str(value).strip()
+        return str(
+            value
+        ).strip()
 
     # =========================================================
     # CALCULATE METRIC VALUES
