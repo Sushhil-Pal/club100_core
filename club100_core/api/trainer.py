@@ -1047,3 +1047,948 @@ def assessments(search=None, status=None):
     return {
         "assessments": result,
     }
+
+
+@frappe.whitelist(methods=["GET"])
+def sessions(status=None):
+    trainer = _require_trainer()
+
+    status = (status or "").strip()
+
+    filters = {
+        "trainer": trainer.name,
+    }
+
+    if status in (
+        "Scheduled",
+        "Live",
+        "Completed",
+        "Cancelled",
+    ):
+        filters["status"] = status
+
+    rows = frappe.get_all(
+        "Club100 Session",
+        filters=filters,
+        fields=[
+            "name",
+            "cohort",
+            "program",
+            "session_date",
+            "start_time",
+            "end_time",
+            "delivery_mode",
+            "status",
+            "meeting_provider",
+            "meeting_url",
+            "attendance_synced",
+        ],
+        order_by=(
+            "session_date desc, "
+            "start_time desc"
+        ),
+        limit_page_length=100,
+    )
+
+    cohort_ids = list({
+        row.cohort
+        for row in rows
+        if row.cohort
+    })
+
+    program_ids = list({
+        row.program
+        for row in rows
+        if row.program
+    })
+
+    cohort_names = {}
+    program_names = {}
+
+    if cohort_ids:
+        cohorts = frappe.get_all(
+            "Club100 Cohort",
+            filters={
+                "name": [
+                    "in",
+                    cohort_ids,
+                ],
+            },
+            fields=[
+                "name",
+                "cohort_name",
+            ],
+        )
+
+        cohort_names = {
+            row.name:
+                row.cohort_name
+                or row.name
+            for row in cohorts
+        }
+
+    if program_ids:
+        programs = frappe.get_all(
+            "Club100 Program",
+            filters={
+                "name": [
+                    "in",
+                    program_ids,
+                ],
+            },
+            fields=[
+                "name",
+                "program_name",
+            ],
+        )
+
+        program_names = {
+            row.name:
+                row.program_name
+                or row.name
+            for row in programs
+        }
+
+    return {
+        "sessions": [
+            {
+                "id": row.name,
+
+                "cohort": {
+                    "id": row.cohort,
+                    "name":
+                        cohort_names.get(
+                            row.cohort
+                        )
+                        or row.cohort,
+                },
+
+                "program": {
+                    "id": row.program,
+                    "name":
+                        program_names.get(
+                            row.program
+                        )
+                        or row.program,
+                },
+
+                "sessionDate":
+                    row.session_date,
+
+                "startTime":
+                    row.start_time,
+
+                "endTime":
+                    row.end_time,
+
+                "deliveryMode":
+                    row.delivery_mode,
+
+                "status":
+                    row.status,
+
+                "meetingProvider":
+                    row.meeting_provider,
+
+                "meetingUrl":
+                    row.meeting_url,
+
+                "attendanceSynced":
+                    bool(
+                        row.attendance_synced
+                    ),
+            }
+            for row in rows
+        ]
+    }
+
+@frappe.whitelist(methods=["GET"])
+def session_detail(session_id):
+    trainer = _require_trainer()
+
+    session_id = (
+        session_id or ""
+    ).strip()
+
+    if not session_id:
+        frappe.throw(
+            "Session ID is required",
+            frappe.ValidationError,
+        )
+
+    if not frappe.db.exists(
+        "Club100 Session",
+        session_id,
+    ):
+        frappe.throw(
+            "Session not found",
+            frappe.DoesNotExistError,
+        )
+
+    session = frappe.get_doc(
+        "Club100 Session",
+        session_id,
+    )
+
+    if session.trainer != trainer.name:
+        frappe.throw(
+            "You cannot access this session.",
+            frappe.PermissionError,
+        )
+
+    cohort = frappe.db.get_value(
+        "Club100 Cohort",
+        session.cohort,
+        [
+            "name",
+            "cohort_name",
+        ],
+        as_dict=True,
+    )
+
+    program = frappe.db.get_value(
+        "Club100 Program",
+        session.program,
+        [
+            "name",
+            "program_name",
+        ],
+        as_dict=True,
+    )
+
+    # ---------------------------------------------------------
+    # Active cohort enrollments
+    # ---------------------------------------------------------
+
+    enrollments = frappe.get_all(
+        "Club100 Enrollment",
+        filters={
+            "cohort":
+                session.cohort,
+            "status":
+                "Active",
+        },
+        fields=[
+            "name",
+            "member",
+        ],
+        order_by="creation asc",
+    )
+
+    member_ids = [
+        row.member
+        for row in enrollments
+        if row.member
+    ]
+
+    members_by_id = {}
+
+    if member_ids:
+        member_rows = frappe.get_all(
+            "Club100 Member",
+            filters={
+                "name": [
+                    "in",
+                    member_ids,
+                ],
+            },
+            fields=[
+                "name",
+                "full_name",
+                "mobile",
+                "email",
+            ],
+        )
+
+        members_by_id = {
+            row.name: row
+            for row in member_rows
+        }
+
+    # ---------------------------------------------------------
+    # Existing attendance
+    # ---------------------------------------------------------
+
+    attendance_rows = frappe.get_all(
+        "Club100 Attendance",
+        filters={
+            "session":
+                session.name,
+        },
+        fields=[
+            "name",
+            "member",
+            "attendance_mode",
+            "source",
+            "join_time",
+            "leave_time",
+            "minutes_attended",
+            "attendance_status",
+            "notes",
+        ],
+    )
+
+    attendance_by_member = {
+        row.member: row
+        for row in attendance_rows
+        if row.member
+    }
+
+    participants = []
+
+    for enrollment in enrollments:
+        member = members_by_id.get(
+            enrollment.member
+        )
+
+        if not member:
+            continue
+
+        attendance = (
+            attendance_by_member.get(
+                member.name
+            )
+        )
+
+        participants.append(
+            {
+                "member": {
+                    "id":
+                        member.name,
+
+                    "fullName":
+                        member.full_name,
+
+                    "mobile":
+                        member.mobile,
+
+                    "email":
+                        member.email,
+                },
+
+                "enrollmentId":
+                    enrollment.name,
+
+                "attendance": (
+                    {
+                        "id":
+                            attendance.name,
+
+                        "status":
+                            attendance.attendance_status,
+
+                        "mode":
+                            attendance.attendance_mode,
+
+                        "source":
+                            attendance.source,
+
+                        "minutesAttended":
+                            attendance.minutes_attended,
+
+                        "notes":
+                            attendance.notes,
+                    }
+                    if attendance
+                    else None
+                ),
+            }
+        )
+
+    return {
+        "session": {
+            "id":
+                session.name,
+
+            "cohort": {
+                "id":
+                    cohort.name
+                    if cohort
+                    else session.cohort,
+
+                "name":
+                    (
+                        cohort.cohort_name
+                        if cohort
+                        else session.cohort
+                    ),
+            },
+
+            "program": {
+                "id":
+                    program.name
+                    if program
+                    else session.program,
+
+                "name":
+                    (
+                        program.program_name
+                        if program
+                        else session.program
+                    ),
+            },
+
+            "sessionDate":
+                session.session_date,
+
+            "startTime":
+                session.start_time,
+
+            "endTime":
+                session.end_time,
+
+            "deliveryMode":
+                session.delivery_mode,
+
+            "status":
+                session.status,
+
+            "meetingProvider":
+                session.meeting_provider,
+
+            "meetingUrl":
+                session.meeting_url,
+
+            "notes":
+                session.notes,
+
+            "attendanceSynced":
+                bool(
+                    session.attendance_synced
+                ),
+
+            "participants":
+                participants,
+        }
+    }
+
+@frappe.whitelist(methods=["POST"])
+def save_session_attendance(
+    session_id,
+    attendance,
+):
+    trainer = _require_trainer()
+
+    session_id = (
+        session_id or ""
+    ).strip()
+
+    if not session_id:
+        frappe.throw(
+            "Session ID is required",
+            frappe.ValidationError,
+        )
+
+    if isinstance(
+        attendance,
+        str,
+    ):
+        attendance = (
+            frappe.parse_json(
+                attendance
+            )
+        )
+
+    attendance = (
+        attendance or []
+    )
+
+    session = frappe.get_doc(
+        "Club100 Session",
+        session_id,
+    )
+
+    if session.trainer != trainer.name:
+        frappe.throw(
+            "You cannot update this session.",
+            frappe.PermissionError,
+        )
+
+    if session.status == "Cancelled":
+        frappe.throw(
+            "Attendance cannot be updated for a cancelled session.",
+            frappe.ValidationError,
+        )
+
+    valid_statuses = {
+        "Present",
+        "Partial",
+        "Absent",
+    }
+
+    # Members currently enrolled in cohort
+    valid_members = set(
+        frappe.get_all(
+            "Club100 Enrollment",
+            filters={
+                "cohort":
+                    session.cohort,
+                "status":
+                    "Active",
+            },
+            pluck="member",
+        )
+    )
+
+    saved = 0
+
+    for item in attendance:
+        member_id = (
+            item.get("memberId")
+            or ""
+        ).strip()
+
+        attendance_status = (
+            item.get("status")
+            or ""
+        ).strip()
+
+        notes = (
+            item.get("notes")
+            or ""
+        ).strip()
+
+        if not member_id:
+            continue
+
+        if (
+            member_id
+            not in valid_members
+        ):
+            frappe.throw(
+                f"Member {member_id} "
+                "is not actively enrolled "
+                "in this session cohort.",
+                frappe.ValidationError,
+            )
+
+        if (
+            attendance_status
+            not in valid_statuses
+        ):
+            frappe.throw(
+                "Attendance status must be "
+                "Present, Partial or Absent.",
+                frappe.ValidationError,
+            )
+
+        existing = frappe.db.get_value(
+            "Club100 Attendance",
+            {
+                "session":
+                    session.name,
+
+                "member":
+                    member_id,
+            },
+            "name",
+        )
+
+        if existing:
+            doc = frappe.get_doc(
+                "Club100 Attendance",
+                existing,
+            )
+        else:
+            doc = frappe.new_doc(
+                "Club100 Attendance"
+            )
+
+            doc.session = (
+                session.name
+            )
+
+            doc.member = (
+                member_id
+            )
+
+        doc.attendance_status = (
+            attendance_status
+        )
+
+        doc.attendance_mode = (
+            "Trainer Marked"
+        )
+
+        doc.source = "Manual"
+
+        doc.recorded_by = (
+            frappe.session.user
+        )
+
+        doc.recorded_at = (
+            frappe.utils.now()
+        )
+
+        doc.notes = (
+            notes or None
+        )
+
+        doc.save(
+            ignore_permissions=True
+        )
+
+        saved += 1
+
+    return {
+        "success": True,
+        "saved": saved,
+    }
+
+@frappe.whitelist(methods=["POST"])
+def complete_session(session_id):
+    trainer = _require_trainer()
+
+    session_id = (
+        session_id or ""
+    ).strip()
+
+    session = frappe.get_doc(
+        "Club100 Session",
+        session_id,
+    )
+
+    if session.trainer != trainer.name:
+        frappe.throw(
+            "You cannot complete this session.",
+            frappe.PermissionError,
+        )
+
+    if session.status == "Cancelled":
+        frappe.throw(
+            "A cancelled session cannot be completed.",
+            frappe.ValidationError,
+        )
+
+    active_members = set(
+        frappe.get_all(
+            "Club100 Enrollment",
+            filters={
+                "cohort":
+                    session.cohort,
+
+                "status":
+                    "Active",
+            },
+            pluck="member",
+        )
+    )
+
+    attendance_members = set(
+        frappe.get_all(
+            "Club100 Attendance",
+            filters={
+                "session":
+                    session.name,
+            },
+            pluck="member",
+        )
+    )
+
+    missing = (
+        active_members
+        - attendance_members
+    )
+
+    if missing:
+        frappe.throw(
+            f"Attendance must be recorded "
+            f"for all participants before "
+            f"completing the session. "
+            f"{len(missing)} participant(s) "
+            f"are still unmarked.",
+            frappe.ValidationError,
+        )
+
+    session.status = "Completed"
+
+    session.attendance_synced = 1
+
+    session.save(
+        ignore_permissions=True
+    )
+
+    return {
+        "success": True,
+        "session": {
+            "id":
+                session.name,
+
+            "status":
+                session.status,
+        },
+    }
+
+@frappe.whitelist(methods=["GET"])
+def today():
+    trainer = _require_trainer()
+
+    today_date = frappe.utils.today()
+
+    # ---------------------------------------------------------
+    # Today's sessions
+    # ---------------------------------------------------------
+
+    session_rows = frappe.get_all(
+        "Club100 Session",
+        filters={
+            "trainer": trainer.name,
+            "session_date": today_date,
+        },
+        fields=[
+            "name",
+            "cohort",
+            "program",
+            "session_date",
+            "start_time",
+            "end_time",
+            "delivery_mode",
+            "status",
+            "meeting_provider",
+            "meeting_url",
+        ],
+        order_by="start_time asc",
+    )
+
+    cohort_ids = list({
+        row.cohort
+        for row in session_rows
+        if row.cohort
+    })
+
+    program_ids = list({
+        row.program
+        for row in session_rows
+        if row.program
+    })
+
+    cohort_names = {}
+    program_names = {}
+
+    if cohort_ids:
+        cohorts = frappe.get_all(
+            "Club100 Cohort",
+            filters={
+                "name": ["in", cohort_ids],
+            },
+            fields=[
+                "name",
+                "cohort_name",
+            ],
+        )
+
+        cohort_names = {
+            row.name:
+                row.cohort_name
+                or row.name
+            for row in cohorts
+        }
+
+    if program_ids:
+        programs = frappe.get_all(
+            "Club100 Program",
+            filters={
+                "name": ["in", program_ids],
+            },
+            fields=[
+                "name",
+                "program_name",
+            ],
+        )
+
+        program_names = {
+            row.name:
+                row.program_name
+                or row.name
+            for row in programs
+        }
+
+    sessions = []
+
+    for row in session_rows:
+        sessions.append({
+            "id":
+                row.name,
+
+            "cohort": {
+                "id":
+                    row.cohort,
+
+                "name":
+                    cohort_names.get(
+                        row.cohort
+                    )
+                    or row.cohort,
+            },
+
+            "program": {
+                "id":
+                    row.program,
+
+                "name":
+                    program_names.get(
+                        row.program
+                    )
+                    or row.program,
+            },
+
+            "sessionDate":
+                row.session_date,
+
+            "startTime":
+                row.start_time,
+
+            "endTime":
+                row.end_time,
+
+            "deliveryMode":
+                row.delivery_mode,
+
+            "status":
+                row.status,
+
+            "meetingProvider":
+                row.meeting_provider,
+
+            "meetingUrl":
+                row.meeting_url,
+        })
+
+    # ---------------------------------------------------------
+    # Draft assessments
+    # ---------------------------------------------------------
+
+    assessment_rows = frappe.get_all(
+        "Club100 Assessment",
+        filters={
+            "assessor": trainer.name,
+            "status": "Draft",
+        },
+        fields=[
+            "name",
+            "member",
+            "assessment_type",
+            "assessment_date",
+            "modified",
+        ],
+        order_by="modified desc",
+        limit_page_length=5,
+    )
+
+    member_ids = list({
+        row.member
+        for row in assessment_rows
+        if row.member
+    })
+
+    members = {}
+
+    if member_ids:
+        member_rows = frappe.get_all(
+            "Club100 Member",
+            filters={
+                "name": ["in", member_ids],
+            },
+            fields=[
+                "name",
+                "full_name",
+                "mobile",
+            ],
+        )
+
+        members = {
+            row.name: row
+            for row in member_rows
+        }
+
+    draft_assessments = []
+
+    for row in assessment_rows:
+        member = members.get(
+            row.member
+        )
+
+        draft_assessments.append({
+            "id":
+                row.name,
+
+            "assessmentType":
+                row.assessment_type,
+
+            "assessmentDate":
+                row.assessment_date,
+
+            "modified":
+                row.modified,
+
+            "member": {
+                "id":
+                    row.member,
+
+                "fullName":
+                    (
+                        member.full_name
+                        if member
+                        else row.member
+                    ),
+
+                "mobile":
+                    (
+                        member.mobile
+                        if member
+                        else None
+                    ),
+            },
+        })
+
+    # ---------------------------------------------------------
+    # Summary
+    # ---------------------------------------------------------
+
+    scheduled_count = sum(
+        1
+        for item in sessions
+        if item["status"] == "Scheduled"
+    )
+
+    live_count = sum(
+        1
+        for item in sessions
+        if item["status"] == "Live"
+    )
+
+    completed_count = sum(
+        1
+        for item in sessions
+        if item["status"] == "Completed"
+    )
+
+    return {
+        "date":
+            today_date,
+
+        "summary": {
+            "sessions":
+                len(sessions),
+
+            "scheduled":
+                scheduled_count,
+
+            "live":
+                live_count,
+
+            "completed":
+                completed_count,
+
+            "draftAssessments":
+                len(
+                    draft_assessments
+                ),
+        },
+
+        "sessions":
+            sessions,
+
+        "draftAssessments":
+            draft_assessments,
+    }
