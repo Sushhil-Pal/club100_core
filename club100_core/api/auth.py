@@ -143,7 +143,7 @@ def _get_trainer_for_user(user):
 
 
 def _get_app_user_context(user=None):
-    
+
     if user is None:
         user = frappe.session.user
 
@@ -839,4 +839,100 @@ def reset_password(
         "success": True,
         "message":
             "Your password has been reset successfully.",
+    }
+
+# ---------------------------------------------------------
+# PWA installation tracking
+# ---------------------------------------------------------
+
+@frappe.whitelist(
+    methods=["POST"],
+)
+def mark_pwa_installed():
+    user = frappe.session.user
+
+    if not user or user == "Guest":
+        frappe.throw(
+            "Authentication required",
+            frappe.AuthenticationError,
+        )
+
+    installed_on = now_datetime()
+
+    member_name = frappe.db.get_value(
+        "Club100 Member",
+        {
+            "user": user,
+            "status": "Active",
+            "app_access_status": "Active",
+        },
+        "name",
+    )
+
+    trainer_name = frappe.db.get_value(
+        "Club100 Trainer",
+        {
+            "user": user,
+            "status": "Active",
+        },
+        "name",
+    )
+
+    updated = []
+
+    if member_name:
+        member_installed_on = frappe.db.get_value(
+            "Club100 Member",
+            member_name,
+            "pwa_installed_on",
+        )
+
+        values = {
+            "pwa_installed": 1,
+        }
+
+        if not member_installed_on:
+            values["pwa_installed_on"] = installed_on
+
+        frappe.db.set_value(
+            "Club100 Member",
+            member_name,
+            values,
+            update_modified=False,
+        )
+
+        updated.append("member")
+
+    if trainer_name:
+        trainer_installed_on = frappe.db.get_value(
+            "Club100 Trainer",
+            trainer_name,
+            "pwa_installed_on",
+        )
+
+        values = {
+            "pwa_installed": 1,
+        }
+
+        if not trainer_installed_on:
+            values["pwa_installed_on"] = installed_on
+
+        frappe.db.set_value(
+            "Club100 Trainer",
+            trainer_name,
+            values,
+            update_modified=False,
+        )
+
+        updated.append("trainer")
+
+    if not updated:
+        frappe.throw(
+            "This account does not have active Club100 app access.",
+            frappe.PermissionError,
+        )
+
+    return {
+        "success": True,
+        "updated": updated,
     }

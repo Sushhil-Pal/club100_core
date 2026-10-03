@@ -30,6 +30,8 @@
   "medical_notes",
   "onboarding_completed_on",
   "profile_image",
+  "pwa_installed",
+  "pwa_installed_on",
   "notes"
  ],
  "fields": [
@@ -179,12 +181,25 @@
    "fieldtype": "Datetime",
    "label": "Onboarding Completed On",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "pwa_installed",
+   "fieldtype": "Check",
+   "label": "PWA Installed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pwa_installed_on",
+   "fieldtype": "Datetime",
+   "label": "PWA Installed On",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-29 09:42:57.976875",
+ "modified": "2026-10-03 17:52:58.313480",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Member",

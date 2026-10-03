@@ -21,6 +21,8 @@
   "can_deliver_offline",
   "primary_location",
   "max_online_cohort_size",
+  "pwa_installed",
+  "pwa_installed_on",
   "notes"
  ],
  "fields": [
@@ -115,12 +117,25 @@
    "fieldname": "primary_location",
    "fieldtype": "Data",
    "label": "Primary Location"
+  },
+  {
+   "default": "0",
+   "fieldname": "pwa_installed",
+   "fieldtype": "Check",
+   "label": "PWA Installed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pwa_installed_on",
+   "fieldtype": "Datetime",
+   "label": "PWA Installed On",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-02 21:54:32.511324",
+ "modified": "2026-10-03 18:17:11.504028",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Trainer",
