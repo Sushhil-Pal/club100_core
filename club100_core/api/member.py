@@ -746,3 +746,746 @@ def assessment_result(assessment_id):
                 previous_assessment,
         }
     }
+
+@frappe.whitelist(methods=["GET"])
+def schedule():
+    member = _get_current_member()
+
+    today_date = frappe.utils.getdate(
+        frappe.utils.today()
+    )
+
+    # ---------------------------------------------------------
+    # Member enrollments
+    # ---------------------------------------------------------
+
+    enrollment_rows = frappe.get_all(
+        "Club100 Enrollment",
+        filters={
+            "member":
+                member.name,
+
+            "status":
+                ["!=", "Cancelled"],
+        },
+        fields=[
+            "name",
+            "program",
+            "cohort",
+            "start_date",
+            "end_date",
+            "status",
+        ],
+        order_by="start_date asc",
+    )
+
+    if not enrollment_rows:
+        return {
+            "upcoming": [],
+            "past": [],
+        }
+
+    cohort_ids = list({
+        row.cohort
+        for row in enrollment_rows
+        if row.cohort
+    })
+
+    if not cohort_ids:
+        return {
+            "upcoming": [],
+            "past": [],
+        }
+
+    # ---------------------------------------------------------
+    # Sessions for enrolled cohorts
+    # ---------------------------------------------------------
+
+    session_rows = frappe.get_all(
+        "Club100 Session",
+        filters={
+            "cohort": [
+                "in",
+                cohort_ids,
+            ],
+        },
+        fields=[
+            "name",
+            "cohort",
+            "program",
+            "trainer",
+            "session_date",
+            "start_time",
+            "end_time",
+            "delivery_mode",
+            "meeting_provider",
+            "meeting_url",
+            "status",
+            "notes",
+        ],
+        order_by=(
+            "session_date asc, "
+            "start_time asc"
+        ),
+        limit_page_length=500,
+    )
+
+    # ---------------------------------------------------------
+    # Lookup data
+    # ---------------------------------------------------------
+
+    program_ids = list({
+        row.program
+        for row in session_rows
+        if row.program
+    })
+
+    trainer_ids = list({
+        row.trainer
+        for row in session_rows
+        if row.trainer
+    })
+
+    program_names = {}
+
+    if program_ids:
+        program_rows = frappe.get_all(
+            "Club100 Program",
+            filters={
+                "name": [
+                    "in",
+                    program_ids,
+                ],
+            },
+            fields=[
+                "name",
+                "program_name",
+            ],
+        )
+
+        program_names = {
+            row.name:
+                row.program_name
+                or row.name
+            for row in program_rows
+        }
+
+    cohort_names = {}
+
+    cohort_rows = frappe.get_all(
+        "Club100 Cohort",
+        filters={
+            "name": [
+                "in",
+                cohort_ids,
+            ],
+        },
+        fields=[
+            "name",
+            "cohort_name",
+            "fitness_level",
+        ],
+    )
+
+    cohorts_by_id = {
+        row.name: row
+        for row in cohort_rows
+    }
+
+    trainer_names = {}
+
+    if trainer_ids:
+        trainer_rows = frappe.get_all(
+            "Club100 Trainer",
+            filters={
+                "name": [
+                    "in",
+                    trainer_ids,
+                ],
+            },
+            fields=[
+                "name",
+                "trainer_name",
+            ],
+        )
+
+        trainer_names = {
+            row.name:
+                row.trainer_name
+                or row.name
+            for row in trainer_rows
+        }
+
+    attendance_rows = frappe.get_all(
+        "Club100 Attendance",
+        filters={
+            "member":
+                member.name,
+        },
+        fields=[
+            "session",
+            "attendance_status",
+            "minutes_attended",
+            "notes",
+        ],
+    )
+
+    attendance_by_session = {
+        row.session: row
+        for row in attendance_rows
+    }
+
+    # ---------------------------------------------------------
+    # Enrollment validity by session date
+    # ---------------------------------------------------------
+
+    def member_was_enrolled(
+        session_row
+    ):
+        session_date = (
+            frappe.utils.getdate(
+                session_row.session_date
+            )
+        )
+
+        for enrollment in enrollment_rows:
+            if (
+                enrollment.cohort
+                != session_row.cohort
+            ):
+                continue
+
+            if (
+                enrollment.start_date
+                and frappe.utils.getdate(
+                    enrollment.start_date
+                ) > session_date
+            ):
+                continue
+
+            if (
+                enrollment.end_date
+                and frappe.utils.getdate(
+                    enrollment.end_date
+                ) < session_date
+            ):
+                continue
+
+            return True
+
+        return False
+
+    # ---------------------------------------------------------
+    # Build response
+    # ---------------------------------------------------------
+
+    upcoming = []
+    past = []
+
+    for row in session_rows:
+        if not member_was_enrolled(
+            row
+        ):
+            continue
+
+        session_date = (
+            frappe.utils.getdate(
+                row.session_date
+            )
+        )
+
+        cohort = cohorts_by_id.get(
+            row.cohort
+        )
+
+        attendance = (
+            attendance_by_session.get(
+                row.name
+            )
+        )
+
+        item = {
+            "id":
+                row.name,
+
+            "program": {
+                "id":
+                    row.program,
+
+                "name":
+                    program_names.get(
+                        row.program
+                    )
+                    or row.program,
+            },
+
+            "cohort": {
+                "id":
+                    row.cohort,
+
+                "name":
+                    (
+                        cohort.cohort_name
+                        if cohort
+                        else row.cohort
+                    ),
+
+                "fitnessLevel":
+                    (
+                        cohort.fitness_level
+                        if cohort
+                        else None
+                    ),
+            },
+
+            "trainer": {
+                "id":
+                    row.trainer,
+
+                "name":
+                    trainer_names.get(
+                        row.trainer
+                    )
+                    or row.trainer,
+            },
+
+            "sessionDate":
+                row.session_date,
+
+            "startTime":
+                row.start_time,
+
+            "endTime":
+                row.end_time,
+
+            "deliveryMode":
+                row.delivery_mode,
+
+            "status":
+                row.status,
+
+            "meetingProvider":
+                row.meeting_provider,
+
+            "meetingUrl":
+                row.meeting_url,
+
+            "notes":
+                row.notes,
+
+            "attendance": (
+                {
+                    "status":
+                        attendance.attendance_status,
+
+                    "minutesAttended":
+                        attendance.minutes_attended,
+
+                    "notes":
+                        attendance.notes,
+                }
+                if attendance
+                else None
+            ),
+        }
+
+        if (
+            session_date >= today_date
+            and row.status
+            not in (
+                "Completed",
+                "Cancelled",
+            )
+        ):
+            upcoming.append(
+                item
+            )
+        else:
+            past.append(
+                item
+            )
+
+    # Past should be newest first
+
+    past.sort(
+        key=lambda item: (
+            item["sessionDate"],
+            str(
+                item["startTime"]
+                or ""
+            ),
+        ),
+        reverse=True,
+    )
+
+    return {
+        "upcoming":
+            upcoming,
+
+        "past":
+            past,
+    }
+
+
+
+@frappe.whitelist(methods=["GET"])
+def session_detail(session_id):
+    member = _get_current_member()
+
+    session_id = (
+        session_id or ""
+    ).strip()
+
+    if not session_id:
+        frappe.throw(
+            "Session ID is required.",
+            frappe.ValidationError,
+        )
+
+    if not frappe.db.exists(
+        "Club100 Session",
+        session_id,
+    ):
+        frappe.throw(
+            "Session not found.",
+            frappe.DoesNotExistError,
+        )
+
+    session = frappe.get_doc(
+        "Club100 Session",
+        session_id,
+    )
+
+    # ---------------------------------------------------------
+    # Verify member enrollment for this session date
+    # ---------------------------------------------------------
+
+    enrollment_rows = frappe.get_all(
+        "Club100 Enrollment",
+        filters={
+            "member":
+                member.name,
+
+            "cohort":
+                session.cohort,
+
+            "status":
+                ["!=", "Cancelled"],
+        },
+        fields=[
+            "name",
+            "start_date",
+            "end_date",
+            "status",
+        ],
+    )
+
+    session_date = (
+        frappe.utils.getdate(
+            session.session_date
+        )
+    )
+
+    valid_enrollment = None
+
+    for enrollment in enrollment_rows:
+        if (
+            enrollment.start_date
+            and frappe.utils.getdate(
+                enrollment.start_date
+            ) > session_date
+        ):
+            continue
+
+        if (
+            enrollment.end_date
+            and frappe.utils.getdate(
+                enrollment.end_date
+            ) < session_date
+        ):
+            continue
+
+        valid_enrollment = (
+            enrollment
+        )
+
+        break
+
+    if not valid_enrollment:
+        frappe.throw(
+            "You do not have access to this session.",
+            frappe.PermissionError,
+        )
+
+    # ---------------------------------------------------------
+    # Program
+    # ---------------------------------------------------------
+
+    program = frappe.db.get_value(
+        "Club100 Program",
+        session.program,
+        [
+            "name",
+            "program_name",
+            "description",
+            "session_duration_minutes",
+        ],
+        as_dict=True,
+    )
+
+    # ---------------------------------------------------------
+    # Cohort
+    # ---------------------------------------------------------
+
+    cohort = frappe.db.get_value(
+        "Club100 Cohort",
+        session.cohort,
+        [
+            "name",
+            "cohort_name",
+            "fitness_level",
+            "delivery_mode",
+        ],
+        as_dict=True,
+    )
+
+    # ---------------------------------------------------------
+    # Trainer
+    # ---------------------------------------------------------
+
+    trainer = None
+
+    if session.trainer:
+        trainer = frappe.db.get_value(
+            "Club100 Trainer",
+            session.trainer,
+            [
+                "name",
+                "trainer_name",
+                "profile_photo",
+                "bio",
+            ],
+            as_dict=True,
+        )
+
+    # ---------------------------------------------------------
+    # Workout Content
+    #
+    # Only expose content that is Active and published.
+    # ---------------------------------------------------------
+
+    workout_content = None
+
+    if session.workout_content:
+        workout = frappe.db.get_value(
+            "Club100 Workout Content",
+            {
+                "name":
+                    session.workout_content,
+
+                "status":
+                    "Active",
+
+                "publish_to_app":
+                    1,
+            },
+            [
+                "name",
+                "title",
+                "format",
+                "fitness_level",
+                "duration_minutes",
+                "equipment_required",
+                "video_url",
+                "thumbnail",
+                "instructions",
+            ],
+            as_dict=True,
+        )
+
+        if workout:
+            workout_content = {
+                "id":
+                    workout.name,
+
+                "title":
+                    workout.title,
+
+                "format":
+                    workout.format,
+
+                "fitnessLevel":
+                    workout.fitness_level,
+
+                "durationMinutes":
+                    workout.duration_minutes,
+
+                "equipmentRequired":
+                    workout.equipment_required,
+
+                "videoUrl":
+                    workout.video_url,
+
+                "thumbnail":
+                    workout.thumbnail,
+
+                "instructions":
+                    workout.instructions,
+            }
+
+    # ---------------------------------------------------------
+    # Attendance
+    # ---------------------------------------------------------
+
+    attendance = frappe.db.get_value(
+        "Club100 Attendance",
+        {
+            "session":
+                session.name,
+
+            "member":
+                member.name,
+        },
+        [
+            "attendance_status",
+            "attendance_mode",
+            "minutes_attended",
+            "notes",
+        ],
+        as_dict=True,
+    )
+
+    # ---------------------------------------------------------
+    # Meeting URL
+    #
+    # Only expose while session is Live.
+    # ---------------------------------------------------------
+
+    meeting_url = (
+        session.meeting_url
+        if session.status == "Live"
+        else None
+    )
+
+    # ---------------------------------------------------------
+    # Response
+    # ---------------------------------------------------------
+
+    return {
+        "session": {
+            "id":
+                session.name,
+
+            "status":
+                session.status,
+
+            "sessionDate":
+                session.session_date,
+
+            "startTime":
+                session.start_time,
+
+            "endTime":
+                session.end_time,
+
+            "deliveryMode":
+                session.delivery_mode,
+
+            "meetingProvider":
+                session.meeting_provider,
+
+            "meetingUrl":
+                meeting_url,
+
+            "notes":
+                session.notes,
+
+            "program": {
+                "id":
+                    program.name
+                    if program
+                    else session.program,
+
+                "name":
+                    (
+                        program.program_name
+                        if program
+                        else session.program
+                    ),
+
+                "description":
+                    (
+                        program.description
+                        if program
+                        else None
+                    ),
+
+                "sessionDurationMinutes":
+                    (
+                        program.session_duration_minutes
+                        if program
+                        else None
+                    ),
+            },
+
+            "cohort": {
+                "id":
+                    cohort.name
+                    if cohort
+                    else session.cohort,
+
+                "name":
+                    (
+                        cohort.cohort_name
+                        if cohort
+                        else session.cohort
+                    ),
+
+                "fitnessLevel":
+                    (
+                        cohort.fitness_level
+                        if cohort
+                        else None
+                    ),
+            },
+
+            "trainer": (
+                {
+                    "id":
+                        trainer.name,
+
+                    "name":
+                        trainer.trainer_name,
+
+                    "photo":
+                        trainer.profile_photo,
+
+                    "bio":
+                        trainer.bio,
+                }
+                if trainer
+                else None
+            ),
+
+            "workoutContent":
+                workout_content,
+
+            "attendance": (
+                {
+                    "status":
+                        attendance.attendance_status,
+
+                    "mode":
+                        attendance.attendance_mode,
+
+                    "minutesAttended":
+                        attendance.minutes_attended,
+
+                    "notes":
+                        attendance.notes,
+                }
+                if attendance
+                else None
+            ),
+        }
+    }
