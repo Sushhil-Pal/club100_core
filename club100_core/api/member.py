@@ -1356,6 +1356,27 @@ def session_detail(session_id):
     )
 
     # ---------------------------------------------------------
+    # Feedback
+    # ---------------------------------------------------------
+
+    feedback_id = (
+        frappe.db.get_value(
+            "Club100 Feedback",
+            {
+                "member":
+                    member.name,
+
+                "session":
+                    session.name,
+
+                "status":
+                    "Submitted",
+            },
+            "name",
+        )
+    )
+
+    # ---------------------------------------------------------
     # Meeting URL
     #
     # Only expose while session is Live.
@@ -1487,5 +1508,15 @@ def session_detail(session_id):
                 if attendance
                 else None
             ),
+            
+            "feedback": {
+                "submitted":
+                    bool(
+                        feedback_id
+                    ),
+
+                "id":
+                    feedback_id,
+            },
         }
     }
