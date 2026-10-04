@@ -1,0 +1,10 @@
+[
+  {
+    "url": "https://github.com/frappe/erpnext",
+    "branch": "version-16"
+  },
+  {
+    "url": "https://github.com/Sushhil-Pal/club100_core.git",
+    "branch": "main"
+  }
+]
