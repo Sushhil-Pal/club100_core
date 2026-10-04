@@ -108,7 +108,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   db:
-    image: mariadb:10.6
+    image: mariadb:11.8
     restart: unless-stopped
     command:
       - --character-set-server=utf8mb4
@@ -117,19 +117,19 @@ services:
       - --skip-innodb-read-only-compressed
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     healthcheck:
       test:
         [
           "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "--password=${DB_ROOT_PASSWORD}"
+          "healthcheck.sh",
+          "--connect",
+          "--innodb_initialized"
         ]
+      start_period: 5s
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 10
     volumes:
       - db-data:/var/lib/mysql
 
