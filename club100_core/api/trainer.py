@@ -324,7 +324,6 @@ def start_assessment(
         "Club100 Assessment",
         {
             "member": member_id,
-            "assessor": trainer.name,
             "status": "Draft",
         },
         [
@@ -607,14 +606,6 @@ def save_assessment(
         assessment_id,
     )
 
-    # Trainer may only update assessments they are
-    # conducting.
-    if doc.assessor != trainer.name:
-        frappe.throw(
-            "You cannot update this assessment.",
-            frappe.PermissionError,
-        )
-
     rows_by_name = {
         row.name: row
         for row in doc.inputs
@@ -726,12 +717,6 @@ def assessment_result(assessment_id):
         "Club100 Assessment",
         assessment_id,
     )
-
-    if doc.assessor != trainer.name:
-        frappe.throw(
-            "You cannot view this assessment.",
-            frappe.PermissionError,
-        )
 
     member = frappe.db.get_value(
         "Club100 Member",
@@ -1028,9 +1013,7 @@ def assessments(search=None, status=None):
     search = (search or "").strip()
     status = (status or "").strip()
 
-    filters = {
-        "assessor": trainer.name,
-    }
+    filters = {}
 
     if status in (
         "Draft",
@@ -2061,7 +2044,6 @@ def today():
     assessment_rows = frappe.get_all(
         "Club100 Assessment",
         filters={
-            "assessor": trainer.name,
             "status": "Draft",
         },
         fields=[
