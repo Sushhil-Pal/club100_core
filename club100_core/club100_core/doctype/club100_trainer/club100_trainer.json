@@ -65,7 +65,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Trainer Type",
-   "options": "Employee\nContract\nExternal",
+   "options": "Employee\nConsultant\nContract\nExternal",
    "reqd": 1
   },
   {
@@ -135,7 +135,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-03 18:17:11.504028",
+ "modified": "2026-10-05 09:25:54.152985",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Trainer",
