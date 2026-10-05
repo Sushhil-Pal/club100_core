@@ -46,8 +46,14 @@ def me():
         "fitnessLevel":
             member.current_fitness_level,
 
-        "fitnessGoal":
-            member.fitness_goal,
+        "fitnessGoals":
+        (
+            frappe.parse_json(
+                member.fitness_goal
+            )
+            if member.fitness_goal
+            else []
+        ),
 
         "preferredDeliveryMode":
             member.preferred_delivery_mode,
@@ -125,7 +131,7 @@ def update_profile(
 def complete_onboarding(
     date_of_birth=None,
     gender=None,
-    fitness_goal=None,
+    fitness_goals=None,
     current_fitness_level=None,
     preferred_delivery_mode=None,
     medical_notes=None,
@@ -148,11 +154,18 @@ def complete_onboarding(
             frappe.ValidationError,
         )
 
-    if not fitness_goal:
+    if isinstance(fitness_goals, str):
+        fitness_goals = frappe.parse_json(fitness_goals)
+
+    fitness_goals = fitness_goals or []
+
+    if not fitness_goals:
         frappe.throw(
-            "Fitness goal is required",
+            "At least one fitness goal is required",
             frappe.ValidationError,
         )
+
+ 
 
     if not current_fitness_level:
         frappe.throw(
@@ -173,7 +186,9 @@ def complete_onboarding(
     member.date_of_birth = date_of_birth
     member.gender = gender
 
-    member.fitness_goal = fitness_goal
+    member.fitness_goal = frappe.as_json(
+        fitness_goals
+    )
 
     member.current_fitness_level = (
         current_fitness_level

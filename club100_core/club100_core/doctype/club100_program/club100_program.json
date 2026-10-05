@@ -45,7 +45,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Delivery Mode",
-   "options": "Online\nOffline\nHybrid",
+   "options": "Online\nOnsite\nHybrid",
    "reqd": 1
   },
   {
@@ -133,7 +133,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 12:45:37.600648",
+ "modified": "2026-10-05 10:52:00.949034",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Program",

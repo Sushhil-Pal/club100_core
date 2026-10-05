@@ -161,15 +161,14 @@
   },
   {
    "fieldname": "fitness_goal",
-   "fieldtype": "Select",
-   "label": "Fitness Goal",
-   "options": "Improve Strength\nImprove Mobility\nImprove Endurance\nWeight Management\nGeneral Fitness\nHealthy Aging\nSports Performance\nOther"
+   "fieldtype": "Small Text",
+   "label": "Fitness Goals"
   },
   {
    "fieldname": "preferred_delivery_mode",
    "fieldtype": "Select",
    "label": "Preferred Delivery Mode",
-   "options": "Online\nOffline\nHybrid"
+   "options": "Online\nOnsite\nHybrid"
   },
   {
    "fieldname": "medical_notes",
@@ -199,7 +198,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-03 17:52:58.313480",
+ "modified": "2026-10-05 11:32:57.675084",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Member",
