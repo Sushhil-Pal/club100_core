@@ -20,7 +20,8 @@
   "meeting_url",
   "status",
   "attendance_synced",
-  "notes"
+  "notes",
+  "30_min_reminder_sent"
  ],
  "fields": [
   {
@@ -76,7 +77,7 @@
    "fieldname": "delivery_mode",
    "fieldtype": "Select",
    "label": "Delivery Mode",
-   "options": "Online\nOffline\nHybrid",
+   "options": "Online\nOnsite\nHybrid",
    "reqd": 1
   },
   {
@@ -111,12 +112,18 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "default": "0",
+   "fieldname": "30_min_reminder_sent",
+   "fieldtype": "Check",
+   "label": "30 Min Reminder Sent"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-25 14:40:17.298989",
+ "modified": "2026-10-06 10:44:06.034759",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Session",

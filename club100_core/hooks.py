@@ -262,3 +262,10 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+scheduler_events = {
+    "cron": {
+        "*/5 * * * *": [
+            "club100_core.api.session_notifications.process_session_reminders"
+        ],
+    },
+}
