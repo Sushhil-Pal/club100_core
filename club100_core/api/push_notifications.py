@@ -1,9 +1,6 @@
 import frappe
 from frappe.utils import now_datetime
-
 import json
-
-import frappe
 
 from pywebpush import (
     webpush,
@@ -142,8 +139,11 @@ def subscribe(
             ignore_permissions=True
         )
 
+    _update_member_push_status(member.name, update_last_subscription=True,)
+
     frappe.db.commit()
 
+    
     return {
         "success": True,
         "subscriptionId":
@@ -175,6 +175,10 @@ def unsubscribe(
 
     if not subscription_name:
         # Already absent = effectively unsubscribed.
+        _update_member_push_status(member.name)
+
+        frappe.db.commit()
+
         return {
             "success": True,
             "active": False,
@@ -193,7 +197,7 @@ def unsubscribe(
     subscription.save(
         ignore_permissions=True
     )
-
+    _update_member_push_status(member.name)
     frappe.db.commit()
 
     return {
@@ -347,6 +351,7 @@ def send_push_to_subscription(
             subscription.save(
                 ignore_permissions=True
             )
+            _update_member_push_status(subscription.member)
 
         frappe.log_error(
             message=str(exc),
@@ -417,3 +422,35 @@ def send_push_to_member(
         "sent": sent,
         "failed": failed,
     }
+
+def _update_member_push_status(
+    member,
+    update_last_subscription=False,
+):
+    if not member:
+        return
+
+    active_count = frappe.db.count(
+        "Club100 Push Subscription",
+        {
+            "member": member,
+            "active": 1,
+        },
+    )
+
+    values = {
+        "push_notifications_enabled":
+            1 if active_count > 0 else 0,
+    }
+
+    if update_last_subscription:
+        values[
+            "last_push_subscription_on"
+        ] = frappe.utils.now_datetime()
+
+    frappe.db.set_value(
+        "Club100 Member",
+        member,
+        values,
+        update_modified=False,
+    )

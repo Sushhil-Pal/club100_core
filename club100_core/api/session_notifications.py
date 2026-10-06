@@ -195,45 +195,25 @@ def send_session_reminder(
 def process_session_reminders():
     now = now_datetime()
 
-    window_start = add_to_date(
-        now,
-        minutes=24,
-    )
-
     window_end = add_to_date(
         now,
         minutes=30,
     )
 
-    logger = frappe.logger("club100")
-
-    logger.info(
-        f"Session reminder scheduler running. "
-        f"Now={now}, "
-        f"Window={window_start} to {window_end}"
-    )
-
     sessions = frappe.get_all(
         "Club100 Session",
         filters={
-            "status":
-                "Scheduled",
+            "status": "Scheduled",
 
-            "30_min_reminder_sent":
-                0,
+            "30_min_reminder_sent": 0,
 
-            "session_date":
+            "session_date": [
+                "between",
                 [
-                    "between",
-                    [
-                        getdate(
-                            window_start
-                        ),
-                        getdate(
-                            window_end
-                        ),
-                    ],
+                    getdate(now),
+                    getdate(window_end),
                 ],
+            ],
         },
         fields=[
             "name",
@@ -242,66 +222,36 @@ def process_session_reminders():
         ],
     )
 
-    logger.info(
-        f"Candidate sessions: "
-        f"{len(sessions)}"
-    )
-
     processed = 0
 
     for row in sessions:
-        session_dt = (
-            _session_datetime(
-                row.session_date,
-                row.start_time,
-            )
-        )
-
-        logger.info(
-            f"Checking {row.name}: "
-            f"session_dt={session_dt}"
+        session_dt = _session_datetime(
+            row.session_date,
+            row.start_time,
         )
 
         if not session_dt:
             continue
 
-        if not (
-            window_start
-            <= session_dt
-            <= window_end
-        ):
-            logger.info(
-                f"Skipping {row.name}: "
-                f"outside reminder window"
-            )
+        # Session must still be in the future
+        if session_dt <= now:
             continue
 
-        result = (
-            send_session_reminder(
-                row.name
-            )
+        # Send reminder for anything starting
+        # within the next 30 minutes.
+        if session_dt > window_end:
+            continue
+
+        result = send_session_reminder(
+            row.name
         )
 
-        processed += 1
-
-        logger.info(
-            f"Reminder result "
-            f"{row.name}: {result}"
-        )
+        if not result.get("skipped"):
+            processed += 1
 
     return {
-        "now":
-            str(now),
-
-        "window_start":
-            str(window_start),
-
-        "window_end":
-            str(window_end),
-
-        "candidates":
-            len(sessions),
-
-        "processed":
-            processed,
+        "now": str(now),
+        "window_end": str(window_end),
+        "candidates": len(sessions),
+        "processed": processed,
     }
