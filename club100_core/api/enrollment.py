@@ -18,9 +18,8 @@ PROGRAMS = {
 }
 
 
-# Temporary sample pricing.
+# Final Club100 membership pricing.
 #
-# Replace these values once final Club100 pricing is approved.
 # Pricing is calculated here on the server and is never trusted
 # from the browser.
 PRICING = {
@@ -37,18 +36,18 @@ PRICING = {
         "name": "Group",
         "monthly": {
             1: 1299,
-            3: 1199,
-            6: 1099,
-            12: 999,
+            3: 1099,
+            6: 999,
+            12: 899,
         },
     },
     "coach": {
         "name": "Coach",
         "monthly": {
             1: 1799,
-            3: 1699,
-            6: 1599,
-            12: 1499,
+            3: 1599,
+            6: 1399,
+            12: 1199,
         },
     },
 }
