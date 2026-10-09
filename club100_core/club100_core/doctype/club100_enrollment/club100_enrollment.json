@@ -8,7 +8,14 @@
  "engine": "InnoDB",
  "field_order": [
   "member",
+  "full_name",
+  "mobile",
+  "email",
   "program",
+  "plan",
+  "membership_duration_months",
+  "monthly_equivalent",
+  "amount_payable",
   "cohort",
   "organization",
   "enrollment_type",
@@ -19,7 +26,12 @@
   "current_fitness_level",
   "status",
   "payment_status",
+  "payment_gateway",
+  "payment_order_id",
+  "payment_id",
+  "payment_date",
   "sales_invoice",
+  "website_source",
   "sponsored_by",
   "completion_percentage",
   "notes",
@@ -33,7 +45,7 @@
    "in_list_view": 1,
    "label": "Member",
    "options": "Club100 Member",
-   "reqd": 1
+   "reqd": 0
   },
   {
    "fieldname": "program",
@@ -140,6 +152,76 @@
    "fieldtype": "Percent",
    "label": "Completion %",
    "read_only": 1
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Plan",
+   "options": "Self\nGroup\nCoach",
+   "reqd": 1
+  },
+  {
+   "fieldname": "membership_duration_months",
+   "fieldtype": "Int",
+   "label": "Membership Duration (Months)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "monthly_equivalent",
+   "fieldtype": "Currency",
+   "label": "Monthly Equivalent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_payable",
+   "fieldtype": "Currency",
+   "label": "Amount Payable",
+   "read_only": 1
+  },
+  {
+   "default": "Website",
+   "fieldname": "website_source",
+   "fieldtype": "Data",
+   "label": "Source",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_gateway",
+   "fieldtype": "Data",
+   "label": "Payment Gateway"
+  },
+  {
+   "fieldname": "payment_order_id",
+   "fieldtype": "Data",
+   "label": "Payment Order ID"
+  },
+  {
+   "fieldname": "payment_id",
+   "fieldtype": "Data",
+   "label": "Payment ID"
+  },
+  {
+   "fieldname": "payment_date",
+   "fieldtype": "Datetime",
+   "label": "Payment Date"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full Name"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
   }
  ],
  "grid_page_length": 50,

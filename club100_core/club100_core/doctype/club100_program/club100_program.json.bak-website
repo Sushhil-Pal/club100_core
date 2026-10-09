@@ -38,8 +38,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Program Code",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "delivery_mode",
@@ -61,7 +60,7 @@
    "fieldname": "duration_weeks",
    "fieldtype": "Int",
    "label": "Duration Weeks",
-   "reqd": 0
+   "reqd": 1
   },
   {
    "fieldname": "sessions_per_week",

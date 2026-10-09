@@ -21,11 +21,7 @@ class Club100Program(Document):
             frappe.throw("Default Cohort Capacity must be greater than 0.")
 
     def validate_price(self):
-        """
-        Program pricing may be determined by Plan + Membership Duration.
-
-        standard_price therefore remains optional. If provided, it must
-        still be a valid non-negative amount.
-        """
-        if self.standard_price is not None and self.standard_price < 0:
-            frappe.throw("Standard Price cannot be negative.")
+        if self.payment_required and not self.standard_price:
+            frappe.throw(
+                "Standard Price is required when Payment Required is enabled."
+            )
