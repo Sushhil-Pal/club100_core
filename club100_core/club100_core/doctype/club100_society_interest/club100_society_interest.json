@@ -1,0 +1,218 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 0,
+ "autoname": "format:C100-SI-{#####}",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "full_name",
+  "mobile",
+  "email",
+  "society",
+  "society_name",
+  "organization",
+  "city_area",
+  "block_tower",
+  "flat_number",
+  "preferred_timing",
+  "status",
+  "invited_cohort",
+  "invite_created_on",
+  "invite_expires_on",
+  "invite_token",
+  "registered_on",
+  "source",
+  "page_url",
+  "member",
+  "enrollment",
+  "converted_on",
+  "registration_key",
+  "society_key",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mobile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "society",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Society",
+   "options": "Club100 Society"
+  },
+  {
+   "fieldname": "society_name",
+   "fieldtype": "Data",
+   "label": "Society Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Link",
+   "label": "Organization",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "city_area",
+   "fieldtype": "Data",
+   "label": "City / Area",
+   "reqd": 1
+  },
+  {
+   "fieldname": "block_tower",
+   "fieldtype": "Data",
+   "label": "Block / Tower"
+  },
+  {
+   "fieldname": "flat_number",
+   "fieldtype": "Data",
+   "label": "Flat Number"
+  },
+  {
+   "fieldname": "preferred_timing",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Preferred Timing",
+   "options": "Morning\nEvening\nEither",
+   "reqd": 1
+  },
+  {
+   "default": "Interested",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Interested\nContacted\nConfirmed\nInvited\nConverted\nNot Interested",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "registered_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Registered On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source"
+  },
+  {
+   "fieldname": "page_url",
+   "fieldtype": "Data",
+   "label": "Page URL"
+  },
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "label": "Member",
+   "options": "Club100 Member",
+   "read_only": 1
+  },
+  {
+   "fieldname": "enrollment",
+   "fieldtype": "Link",
+   "label": "Enrollment",
+   "options": "Club100 Enrollment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "converted_on",
+   "fieldtype": "Datetime",
+   "label": "Converted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "registration_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Registration Key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "society_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Society Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "invited_cohort",
+   "fieldtype": "Link",
+   "label": "Invited Cohort",
+   "options": "Club100 Cohort"
+  },
+  {
+   "fieldname": "invite_created_on",
+   "fieldtype": "Datetime",
+   "label": "Invite Created On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invite_expires_on",
+   "fieldtype": "Datetime",
+   "label": "Invite Expires On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invite_token",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Invite Token",
+   "read_only": 1,
+   "unique": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "Club100 Core",
+ "name": "Club100 Society Interest",
+ "naming_rule": "Expression (old style)",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "full_name,mobile,society_name,city_area",
+ "sort_field": "registered_on",
+ "sort_order": "DESC",
+ "states": []
+}

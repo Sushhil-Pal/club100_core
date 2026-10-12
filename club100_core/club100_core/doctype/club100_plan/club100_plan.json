@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "field:plan_name",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_name",
+  "plan_code",
+  "delivery_type",
+  "max_session_capacity",
+  "coach_led",
+  "enhanced_progress_review",
+  "short_description",
+  "display_order",
+  "publish_to_website",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Plan Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "plan_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Plan Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "delivery_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Delivery Type",
+   "options": "Recorded\nLive Online",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "max_session_capacity",
+   "fieldtype": "Int",
+   "label": "Max Session Capacity"
+  },
+  {
+   "default": "0",
+   "fieldname": "coach_led",
+   "fieldtype": "Check",
+   "label": "Coach Led"
+  },
+  {
+   "default": "0",
+   "fieldname": "enhanced_progress_review",
+   "fieldtype": "Check",
+   "label": "Enhanced Progress Review"
+  },
+  {
+   "fieldname": "short_description",
+   "fieldtype": "Small Text",
+   "label": "Short Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order"
+  },
+  {
+   "default": "1",
+   "fieldname": "publish_to_website",
+   "fieldtype": "Check",
+   "label": "Publish to Website"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Active\nInactive",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "Club100 Core",
+ "name": "Club100 Plan",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "display_order",
+ "sort_order": "ASC",
+ "states": []
+}

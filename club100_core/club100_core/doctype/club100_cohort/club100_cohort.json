@@ -9,11 +9,18 @@
  "field_order": [
   "cohort_name",
   "program",
+  "plan",
+  "society",
   "organization",
   "cohort_type",
   "delivery_mode",
   "fitness_level",
   "capacity",
+  "society_pricing_enabled",
+  "pricing_member_count",
+  "pricing_tier",
+  "monthly_price_per_member",
+  "pricing_last_calculated_on",
   "start_date",
   "primary_trainer",
   "end_date",
@@ -39,6 +46,20 @@
    "label": "Program",
    "options": "Club100 Program",
    "reqd": 1
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Plan",
+   "options": "Club100 Plan"
+  },
+  {
+   "fieldname": "society",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Society",
+   "options": "Club100 Society"
   },
   {
    "fieldname": "organization",
@@ -69,11 +90,41 @@
    "options": "Beginner\nIntermediate\nAdvanced\nMixed"
   },
   {
-   "default": "25",
    "fieldname": "capacity",
    "fieldtype": "Int",
    "label": "Capacity",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "society_pricing_enabled",
+   "fieldtype": "Check",
+   "label": "Society Pricing"
+  },
+  {
+   "default": "0",
+   "description": "Number of committed members expected to train in this onsite batch/session group. This determines the Society pricing tier.",
+   "fieldname": "pricing_member_count",
+   "fieldtype": "Int",
+   "label": "Pricing Member Count"
+  },
+  {
+   "fieldname": "pricing_tier",
+   "fieldtype": "Data",
+   "label": "Pricing Tier",
+   "read_only": 1
+  },
+  {
+   "fieldname": "monthly_price_per_member",
+   "fieldtype": "Currency",
+   "label": "Monthly Price / Member",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pricing_last_calculated_on",
+   "fieldtype": "Datetime",
+   "label": "Pricing Last Calculated On",
+   "read_only": 1
   },
   {
    "fieldname": "start_date",
@@ -127,7 +178,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-05 10:53:31.097912",
+ "modified": "2026-10-12 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Club100 Core",
  "name": "Club100 Cohort",

@@ -18,37 +18,106 @@ PROGRAMS = {
 }
 
 
-# Final Club100 membership pricing.
-#
-# Pricing is calculated here on the server and is never trusted
-# from the browser.
-PRICING = {
+PLANS = {
     "self": {
         "name": "Self",
-        "monthly": {
-            1: 799,
-            3: 699,
-            6: 599,
-            12: 499,
-        },
+        "delivery_type": "Recorded",
+        "max_session_capacity": 0,
+        "coach_led": 0,
+        "enhanced_progress_review": 0,
+        "short_description": (
+            "Pre-recorded Club100 sessions for members who prefer "
+            "to train independently."
+        ),
+        "display_order": 10,
     },
     "group": {
         "name": "Group",
-        "monthly": {
-            1: 1299,
-            3: 1099,
-            6: 999,
-            12: 899,
-        },
+        "delivery_type": "Live Online",
+        "max_session_capacity": 25,
+        "coach_led": 1,
+        "enhanced_progress_review": 0,
+        "short_description": (
+            "Live coached sessions with a maximum of 25 members."
+        ),
+        "display_order": 20,
+    },
+    "group-plus": {
+        "name": "Group Plus",
+        "delivery_type": "Live Online",
+        "max_session_capacity": 15,
+        "coach_led": 1,
+        "enhanced_progress_review": 0,
+        "short_description": (
+            "Live coached sessions with a maximum of 15 members "
+            "for more coach interaction."
+        ),
+        "display_order": 30,
+    },
+    "focus": {
+        "name": "Focus",
+        "delivery_type": "Live Online",
+        "max_session_capacity": 10,
+        "coach_led": 1,
+        "enhanced_progress_review": 0,
+        "short_description": (
+            "Live coached sessions with a maximum of 10 members "
+            "for higher individual attention and feedback."
+        ),
+        "display_order": 40,
     },
     "coach": {
         "name": "Coach",
-        "monthly": {
-            1: 1799,
-            3: 1599,
-            6: 1399,
-            12: 1199,
-        },
+        "delivery_type": "Live Online",
+        "max_session_capacity": 5,
+        "coach_led": 1,
+        "enhanced_progress_review": 1,
+        "short_description": (
+            "Live coached sessions with a maximum of 5 members, "
+            "plus closer progress monitoring and coach feedback."
+        ),
+        "display_order": 50,
+    },
+}
+
+
+# Final Club100 online plan pricing.
+#
+# Values are the effective monthly rate for each membership duration.
+# The payable amount is calculated server-side as:
+# monthly rate x membership duration.
+#
+# ERP remains the authoritative source of pricing.
+PRICING = {
+    "self": {
+        1: 799,
+        3: 699,
+        6: 599,
+        12: 499,
+    },
+    "group": {
+        1: 1299,
+        3: 1099,
+        6: 999,
+        12: 899,
+    },
+    "group-plus": {
+        1: 1799,
+        3: 1599,
+        6: 1399,
+        12: 1199,
+    },
+    "focus": {
+        1: 2499,
+        3: 2299,
+        6: 2099,
+        12: 1899,
+    },
+    "coach": {
+        1: 3499,
+        3: 3299,
+        6: 3099,
+        12: 2899,
     },
 }
 
@@ -117,6 +186,116 @@ def seed_website_programs():
     return results
 
 
+
+def seed_website_plans():
+    """
+    Create/update the five Club100 online Plan masters.
+
+    Safe to run multiple times.
+
+    This creates the product/operational definitions only.
+    Pricing remains controlled separately by PRICING.
+    """
+
+    results = []
+
+    for plan_code, config in PLANS.items():
+        existing = frappe.db.get_value(
+            "Club100 Plan",
+            {
+                "plan_code": plan_code,
+            },
+            "name",
+        )
+
+        if existing:
+            doc = frappe.get_doc(
+                "Club100 Plan",
+                existing,
+            )
+            action = "updated"
+        else:
+            doc = frappe.new_doc(
+                "Club100 Plan"
+            )
+            action = "created"
+
+        doc.plan_name = config["name"]
+        doc.plan_code = plan_code
+        doc.delivery_type = (
+            config["delivery_type"]
+        )
+        doc.max_session_capacity = (
+            config["max_session_capacity"]
+        )
+        doc.coach_led = (
+            config["coach_led"]
+        )
+        doc.enhanced_progress_review = (
+            config["enhanced_progress_review"]
+        )
+        doc.short_description = (
+            config["short_description"]
+        )
+        doc.display_order = (
+            config["display_order"]
+        )
+        doc.publish_to_website = 1
+        doc.status = "Active"
+
+        doc.save(
+            ignore_permissions=True
+        )
+
+        results.append({
+            "plan_code": plan_code,
+            "plan": doc.name,
+            "action": action,
+            "max_session_capacity":
+                doc.max_session_capacity,
+        })
+
+    frappe.db.commit()
+
+    return results
+
+
+def _get_plan(plan_code):
+    plan_code = str(
+        plan_code or ""
+    ).strip().lower()
+
+    if plan_code not in PLANS:
+        frappe.throw(
+            "Invalid Club100 plan."
+        )
+
+    plan = frappe.db.get_value(
+        "Club100 Plan",
+        {
+            "plan_code": plan_code,
+            "status": "Active",
+        },
+        [
+            "name",
+            "plan_name",
+            "plan_code",
+            "delivery_type",
+            "max_session_capacity",
+            "coach_led",
+            "enhanced_progress_review",
+        ],
+        as_dict=True,
+    )
+
+    if not plan:
+        frappe.throw(
+            "The selected Club100 plan is not currently available."
+        )
+
+    return plan
+
+
 def _clean_mobile(value):
     value = str(value or "").strip()
 
@@ -179,24 +358,38 @@ def _get_program(program_code):
 
 
 def _get_price(plan_key, duration_months):
-    if plan_key not in PRICING:
+    plan_key = str(
+        plan_key or ""
+    ).strip().lower()
+
+    if plan_key not in PLANS:
         frappe.throw(
             "Invalid Club100 plan."
+        )
+
+    if plan_key not in PRICING:
+        frappe.throw(
+            "Pricing for the selected Club100 plan is not yet available."
         )
 
     duration_months = cint(
         duration_months
     )
 
-    if duration_months not in (1, 3, 6, 12):
+    if duration_months not in (
+        1,
+        3,
+        6,
+        12,
+    ):
         frappe.throw(
             "Invalid membership duration."
         )
 
-    plan = PRICING[plan_key]
-
     monthly_equivalent = (
-        plan["monthly"][duration_months]
+        PRICING[plan_key][
+            duration_months
+        ]
     )
 
     amount_payable = (
@@ -205,7 +398,7 @@ def _get_price(plan_key, duration_months):
     )
 
     return {
-        "plan_name": plan["name"],
+        "plan_code": plan_key,
         "duration_months": duration_months,
         "monthly_equivalent": monthly_equivalent,
         "amount_payable": amount_payable,
@@ -337,15 +530,8 @@ def _ensure_member_for_paid_enrollment(
     """
     Create or reuse the Club100 Member that represents a paid enrollment.
 
-    We intentionally do NOT create a Frappe User here.
-
-    The Club100 app's existing Create Account flow will find this member
-    by mobile, create/link the User, set the chosen password and update
-    the member profile. New paid members therefore start with:
-
-        status = Active
-        app_access_status = First Time
-        onboarding_status = Not Started
+    No Frappe User is created here. The existing Club100 app account flow
+    remains responsible for User creation/linking.
     """
 
     mobile = _clean_mobile(
@@ -370,16 +556,30 @@ def _ensure_member_for_paid_enrollment(
         )
     )
 
+    is_society = (
+        getattr(
+            enrollment,
+            "pricing_model",
+            "",
+        )
+        == "Society Batch"
+    )
+
+    desired_member_type = (
+        "Society"
+        if (
+            is_society
+            and enrollment.organization
+        )
+        else "Individual"
+    )
+
     if member_name:
         member = frappe.get_doc(
             "Club100 Member",
             member_name,
         )
 
-        #
-        # A suspended member may represent an operational/admin block.
-        # A new payment should not silently override that.
-        #
         if member.status == "Suspended":
             frappe.throw(
                 "This Club100 member is suspended. "
@@ -388,11 +588,6 @@ def _ensure_member_for_paid_enrollment(
 
         member.status = "Active"
 
-        #
-        # Preserve an already-configured app account. If the member does
-        # not yet have a User, make sure the Create Account flow sees the
-        # member as First Time.
-        #
         if not member.user:
             member.app_access_status = (
                 "First Time"
@@ -415,9 +610,17 @@ def _ensure_member_for_paid_enrollment(
         if not member.email:
             member.email = email
 
-        if not member.member_type:
+        if (
+            is_society
+            and enrollment.organization
+        ):
+            member.member_type = "Society"
+            member.organization = (
+                enrollment.organization
+            )
+        elif not member.member_type:
             member.member_type = (
-                "Individual"
+                desired_member_type
             )
 
         if not member.current_fitness_level:
@@ -436,8 +639,7 @@ def _ensure_member_for_paid_enrollment(
 
         return member
 
-
-    member = frappe.get_doc({
+    member_values = {
         "doctype": "Club100 Member",
 
         "first_name": first_name,
@@ -446,12 +648,9 @@ def _ensure_member_for_paid_enrollment(
         "mobile": mobile,
         "email": email,
 
-        "member_type": "Individual",
+        "member_type":
+            desired_member_type,
 
-        #
-        # This is only the operational starting value required by the
-        # existing Member DocType. Onboarding can replace it later.
-        #
         "current_fitness_level":
             "Beginner",
 
@@ -461,16 +660,24 @@ def _ensure_member_for_paid_enrollment(
         "status":
             "Active",
 
-        #
-        # No User is created here. The existing app Create Account flow
-        # will create/link the User and change this to Active.
-        #
         "app_access_status":
             "First Time",
 
         "onboarding_status":
             "Not Started",
-    })
+    }
+
+    if (
+        is_society
+        and enrollment.organization
+    ):
+        member_values["organization"] = (
+            enrollment.organization
+        )
+
+    member = frappe.get_doc(
+        member_values
+    )
 
     member.insert(
         ignore_permissions=True
@@ -481,6 +688,7 @@ def _ensure_member_for_paid_enrollment(
 
 def _finalize_paid_enrollment_doc(
     enrollment,
+    issue_registration_token=False,
 ):
     """
     Finalize membership after verified payment.
@@ -556,6 +764,23 @@ def _finalize_paid_enrollment_doc(
         ignore_permissions=True
     )
 
+    if (
+        getattr(
+            enrollment,
+            "pricing_model",
+            "",
+        )
+        == "Society Batch"
+    ):
+        from club100_core.society.enrollment import (
+            finalize_paid_society_enrollment,
+        )
+
+        finalize_paid_society_enrollment(
+            enrollment,
+            member,
+        )
+
     next_action = (
         "sign_in"
         if (
@@ -565,6 +790,35 @@ def _finalize_paid_enrollment_doc(
         )
         else "create_account"
     )
+
+    registration_token = None
+    registration_expires_on = None
+
+    if (
+        issue_registration_token
+        and next_action == "create_account"
+    ):
+        from club100_core.api.auth import (
+            issue_app_registration_token,
+        )
+
+        registration = (
+            issue_app_registration_token(
+                member
+            )
+        )
+
+        registration_token = (
+            registration.get(
+                "registration_token"
+            )
+        )
+
+        registration_expires_on = (
+            registration.get(
+                "registration_expires_on"
+            )
+        )
 
     return {
         "member": member.name,
@@ -579,6 +833,10 @@ def _finalize_paid_enrollment_doc(
             str(enrollment.end_date),
         "next_action":
             next_action,
+        "registration_token":
+            registration_token,
+        "registration_expires_on":
+            registration_expires_on,
     }
 
 
@@ -686,8 +944,12 @@ def create_pending_enrollment(
         program
     )
 
+    plan_doc = _get_plan(
+        plan
+    )
+
     pricing = _get_price(
-        plan,
+        plan_doc.plan_code,
         duration_months,
     )
 
@@ -705,7 +967,7 @@ def create_pending_enrollment(
             "mobile": mobile,
             "email": email,
             "program": program_doc.name,
-            "plan": pricing["plan_name"],
+            "plan": plan_doc.name,
             "membership_duration_months":
                 pricing["duration_months"],
             "payment_status": "Pending",
@@ -728,7 +990,8 @@ def create_pending_enrollment(
             "enrollment": enrollment.name,
             "program": program_doc.program_name,
             "program_code": program,
-            "plan": pricing["plan_name"],
+            "plan": plan_doc.plan_name,
+            "plan_code": plan_doc.plan_code,
             "duration_months":
                 pricing["duration_months"],
             "monthly_equivalent":
@@ -751,9 +1014,12 @@ def create_pending_enrollment(
         "mobile": mobile,
         "email": email,
 
+        "pricing_model":
+            "Online Plan",
+
         "program": program_doc.name,
 
-        "plan": pricing["plan_name"],
+        "plan": plan_doc.name,
 
         "membership_duration_months":
             pricing["duration_months"],
@@ -792,7 +1058,8 @@ def create_pending_enrollment(
         "enrollment": enrollment.name,
         "program": program_doc.program_name,
         "program_code": program,
-        "plan": pricing["plan_name"],
+        "plan": plan_doc.plan_name,
+        "plan_code": plan_doc.plan_code,
         "duration_months":
             pricing["duration_months"],
         "monthly_equivalent":
@@ -900,6 +1167,26 @@ def create_payment_order(
             f"{enrollment.payment_status}."
         )
 
+    #
+    # Society Batch enrollments have a short seat reservation window.
+    # Keep this isolated from normal online-plan enrollments.
+    #
+    if (
+        getattr(
+            enrollment,
+            "pricing_model",
+            "",
+        )
+        == "Society Batch"
+    ):
+        from club100_core.society.enrollment import (
+            validate_society_pending_reservation,
+        )
+
+        validate_society_pending_reservation(
+            enrollment
+        )
+
     amount_paise = _rupees_to_paise(
         enrollment.amount_payable
     )
@@ -941,6 +1228,23 @@ def create_payment_order(
                     enrollment.membership_duration_months
                     or ""
                 ),
+            "pricing_model":
+                getattr(
+                    enrollment,
+                    "pricing_model",
+                    "",
+                )
+                or "",
+            "society":
+                getattr(
+                    enrollment,
+                    "society",
+                    "",
+                )
+                or "",
+            "cohort":
+                enrollment.cohort
+                or "",
         },
     }
 
@@ -1125,7 +1429,8 @@ def verify_payment(
     ):
         activation = (
             _finalize_paid_enrollment_doc(
-                enrollment
+                enrollment,
+                issue_registration_token=True,
             )
         )
 
@@ -1299,7 +1604,8 @@ def verify_payment(
     #
     activation = (
         _finalize_paid_enrollment_doc(
-            enrollment
+            enrollment,
+            issue_registration_token=True,
         )
     )
 

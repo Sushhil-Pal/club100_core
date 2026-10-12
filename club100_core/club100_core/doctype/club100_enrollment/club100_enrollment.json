@@ -11,12 +11,18 @@
   "full_name",
   "mobile",
   "email",
+  "pricing_model",
   "program",
   "plan",
   "membership_duration_months",
   "monthly_equivalent",
   "amount_payable",
+  "society_pricing_tier_snapshot",
+  "society_pricing_member_count_snapshot",
+  "pricing_snapshot_on",
   "cohort",
+  "society",
+  "society_interest",
   "organization",
   "enrollment_type",
   "enrollment_date",
@@ -155,11 +161,11 @@
   },
   {
    "fieldname": "plan",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Plan",
-   "options": "Self\nGroup\nCoach",
-   "reqd": 1
+   "options": "Club100 Plan",
+   "reqd": 0
   },
   {
    "fieldname": "membership_duration_months",
@@ -222,6 +228,47 @@
    "fieldtype": "Data",
    "label": "Email",
    "options": "Email"
+  },
+  {
+   "default": "Online Plan",
+   "fieldname": "pricing_model",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Pricing Model",
+   "options": "Online Plan\nSociety Batch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "society",
+   "fieldtype": "Link",
+   "label": "Society",
+   "options": "Club100 Society"
+  },
+  {
+   "fieldname": "society_interest",
+   "fieldtype": "Link",
+   "label": "Society Interest",
+   "options": "Club100 Society Interest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "society_pricing_tier_snapshot",
+   "fieldtype": "Data",
+   "label": "Society Pricing Tier Snapshot",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "society_pricing_member_count_snapshot",
+   "fieldtype": "Int",
+   "label": "Society Pricing Member Count Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pricing_snapshot_on",
+   "fieldtype": "Datetime",
+   "label": "Pricing Snapshot On",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

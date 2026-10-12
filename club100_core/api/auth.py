@@ -1,12 +1,12 @@
+import hashlib
+import secrets
+
 import frappe
 
 from frappe.auth import LoginManager
 from frappe.sessions import get_csrf_token
-from frappe.utils import now_datetime, today, add_to_date
+from frappe.utils import now_datetime, today, add_to_date, get_datetime
 from frappe.utils.password import update_password
-
-import secrets
-
 
 
 # ---------------------------------------------------------
@@ -143,7 +143,7 @@ def _get_trainer_for_user(user):
 
 
 def _get_app_user_context(user=None):
-
+    
     if user is None:
         user = frappe.session.user
 
@@ -193,6 +193,197 @@ def _get_app_user_context(user=None):
         ),
     }
 
+
+# ---------------------------------------------------------
+# Secure post-payment app registration
+# ---------------------------------------------------------
+
+APP_REGISTRATION_TOKEN_TTL_HOURS = 168  # 7 days
+
+
+def _hash_app_registration_token(token):
+    token = (token or "").strip()
+
+    if not token:
+        return ""
+
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
+
+
+def issue_app_registration_token(member):
+    """
+    Issue a short-lived, one-time account-creation token for an
+    already-active Club100 Member.
+
+    Only the SHA-256 hash is stored in ERP. The plain token is returned
+    once to the caller so it can be handed to the Club100 app.
+    """
+    if isinstance(member, str):
+        member = frappe.get_doc(
+            "Club100 Member",
+            member,
+        )
+
+    if member.status != "Active":
+        frappe.throw(
+            "Only active Club100 members can create an app account."
+        )
+
+    if (
+        member.user
+        and member.app_access_status == "Active"
+    ):
+        return {
+            "next_action": "sign_in",
+            "registration_token": None,
+            "registration_expires_on": None,
+        }
+
+    token = secrets.token_urlsafe(32)
+
+    member.app_registration_token_hash = (
+        _hash_app_registration_token(
+            token
+        )
+    )
+    member.app_registration_token_expires_on = (
+        add_to_date(
+            now_datetime(),
+            hours=APP_REGISTRATION_TOKEN_TTL_HOURS,
+        )
+    )
+
+    member.save(
+        ignore_permissions=True
+    )
+
+    return {
+        "next_action": "create_account",
+        "registration_token": token,
+        "registration_expires_on": str(
+            member.app_registration_token_expires_on
+        ),
+    }
+
+
+def _get_member_by_registration_token(
+    registration_token,
+    lock=False,
+):
+    registration_token = (
+        registration_token or ""
+    ).strip()
+
+    if not registration_token:
+        frappe.throw(
+            "Account creation token is required."
+        )
+
+    token_hash = (
+        _hash_app_registration_token(
+            registration_token
+        )
+    )
+
+    member_name = frappe.db.get_value(
+        "Club100 Member",
+        {
+            "app_registration_token_hash":
+                token_hash,
+        },
+        "name",
+    )
+
+    if not member_name:
+        frappe.throw(
+            "This account creation link is invalid or has already been used."
+        )
+
+    if lock:
+        frappe.db.sql(
+            """
+            SELECT name
+            FROM `tabClub100 Member`
+            WHERE name = %s
+            FOR UPDATE
+            """,
+            member_name,
+        )
+
+    member = frappe.get_doc(
+        "Club100 Member",
+        member_name,
+    )
+
+    if member.status != "Active":
+        frappe.throw(
+            "This Club100 membership is not currently active."
+        )
+
+    if (
+        member.app_access_status
+        == "Disabled"
+    ):
+        frappe.throw(
+            "App access is disabled for this membership."
+        )
+
+    if (
+        member.user
+        and member.app_access_status
+        == "Active"
+    ):
+        frappe.throw(
+            "This Club100 account is already active. Please sign in."
+        )
+
+    if (
+        not member.app_registration_token_expires_on
+        or get_datetime(
+            member.app_registration_token_expires_on
+        ) < now_datetime()
+    ):
+        frappe.throw(
+            "This account creation link has expired. Please request a new link."
+        )
+
+    return member
+
+
+@frappe.whitelist(
+    allow_guest=True,
+    methods=["POST"],
+)
+def registration_context(
+    registration_token=None,
+):
+    """
+    Resolve a secure post-payment token into the prefilled details needed
+    by the Club100 app registration screen.
+    """
+    member = (
+        _get_member_by_registration_token(
+            registration_token,
+            lock=False,
+        )
+    )
+
+    return {
+        "success": True,
+        "member": member.name,
+        "fullName": member.full_name or "",
+        "mobile": member.mobile or "",
+        "email": member.email or "",
+        "memberType":
+            member.member_type or "Individual",
+        "onboardingStatus":
+            member.onboarding_status
+            or "Not Started",
+    }
+
+
 # ---------------------------------------------------------
 # CSRF
 # ---------------------------------------------------------
@@ -216,45 +407,108 @@ def csrf_token():
     methods=["POST"],
 )
 def register(
-    full_name,
-    mobile,
-    password,
+    full_name=None,
+    mobile=None,
+    password=None,
     email=None,
+    registration_token=None,
 ):
-    full_name = (full_name or "").strip()
-    mobile = (mobile or "").strip()
-    email = (email or "").strip()
+    """
+    Create Club100 app access.
 
-    if not mobile:
-        frappe.throw(
-            "Mobile number is required"
-        )
+    Post-payment members should use the secure registration_token issued
+    after verified payment. Legacy/direct registration without a token
+    remains supported for members that do not have a secure token attached.
+    """
+
+    registration_token = (
+        registration_token or ""
+    ).strip()
 
     _validate_password(password)
 
-    first_name, last_name = _split_name(
-        full_name
-    )
+    token_member = None
 
-    # -----------------------------------------------------
-    # Look for an existing Club100 Member
-    # -----------------------------------------------------
-
-    member_name = frappe.db.get_value(
-        "Club100 Member",
-        {
-            "mobile": mobile,
-        },
-        "name",
-    )
-
-    if member_name:
-        member = frappe.get_doc(
-            "Club100 Member",
-            member_name,
+    if registration_token:
+        token_member = (
+            _get_member_by_registration_token(
+                registration_token,
+                lock=True,
+            )
         )
 
-        # Existing member must still be operationally active.
+        # Identity comes from ERP, not from browser query/form values.
+        member = token_member
+        member_name = member.name
+
+        full_name = (
+            member.full_name
+            or " ".join(
+                part
+                for part in [
+                    member.first_name,
+                    member.last_name,
+                ]
+                if part
+            )
+        ).strip()
+
+        mobile = (
+            member.mobile or ""
+        ).strip()
+
+        email = (
+            email
+            or member.email
+            or ""
+        ).strip()
+
+    else:
+        full_name = (
+            full_name or ""
+        ).strip()
+
+        mobile = (
+            mobile or ""
+        ).strip()
+
+        email = (
+            email or ""
+        ).strip()
+
+        if not mobile:
+            frappe.throw(
+                "Mobile number is required"
+            )
+
+        member_name = frappe.db.get_value(
+            "Club100 Member",
+            {
+                "mobile": mobile,
+            },
+            "name",
+        )
+
+        member = (
+            frappe.get_doc(
+                "Club100 Member",
+                member_name,
+            )
+            if member_name
+            else None
+        )
+
+    first_name, last_name = (
+        _split_name(
+            full_name
+        )
+    )
+
+    # -----------------------------------------------------
+    # Existing Club100 Member
+    # -----------------------------------------------------
+
+    if member_name:
         if member.status != "Active":
             frappe.throw(
                 "This Club100 membership is not currently active."
@@ -281,9 +535,15 @@ def register(
                 "This membership cannot be registered for app access."
             )
 
-        # -------------------------------------------------
-        # Existing member: create/link Frappe User if needed
-        # -------------------------------------------------
+        # Paid members for whom ERP has issued a secure token must use it.
+        if (
+            not registration_token
+            and member.app_registration_token_hash
+        ):
+            frappe.throw(
+                "Please use the secure Create Account link provided "
+                "after your Club100 enrollment."
+            )
 
         user = None
 
@@ -316,39 +576,49 @@ def register(
 
             member.user = user.name
 
-        # -------------------------------------------------
-        # Update member profile from registration form
-        # -------------------------------------------------
-
-        member.first_name = first_name
-        member.last_name = last_name
-        member.mobile = mobile
+        # For secure post-payment registration, preserve ERP identity.
+        if not registration_token:
+            member.first_name = first_name
+            member.last_name = last_name
+            member.mobile = mobile
 
         if email:
             member.email = email
 
-        user.first_name = first_name
-        user.last_name = last_name
-        user.save(ignore_permissions=True)   
+        user.first_name = (
+            member.first_name
+            or first_name
+        )
+        user.last_name = (
+            member.last_name
+            or last_name
+        )
+        user.save(
+            ignore_permissions=True
+        )
 
-        # Set the user's selected password.
         update_password(
             user=user.name,
             pwd=password,
         )
 
-        member.app_access_status = "Active"
+        member.app_access_status = (
+            "Active"
+        )
 
         if not member.first_app_access_on:
             member.first_app_access_on = (
                 now_datetime()
             )
 
+        # One-time token: invalidate immediately after successful account setup.
+        member.app_registration_token_hash = None
+        member.app_registration_token_expires_on = None
+
         member.save(
             ignore_permissions=True
         )
 
-        # Authenticate immediately after registration.
         _login_user(
             user.name,
             password,
@@ -360,7 +630,8 @@ def register(
 
         return {
             "success": True,
-            "registrationType": "ExistingMember",
+            "registrationType":
+                "ExistingMember",
             **context,
         }
 
@@ -839,100 +1110,4 @@ def reset_password(
         "success": True,
         "message":
             "Your password has been reset successfully.",
-    }
-
-# ---------------------------------------------------------
-# PWA installation tracking
-# ---------------------------------------------------------
-
-@frappe.whitelist(
-    methods=["POST"],
-)
-def mark_pwa_installed():
-    user = frappe.session.user
-
-    if not user or user == "Guest":
-        frappe.throw(
-            "Authentication required",
-            frappe.AuthenticationError,
-        )
-
-    installed_on = now_datetime()
-
-    member_name = frappe.db.get_value(
-        "Club100 Member",
-        {
-            "user": user,
-            "status": "Active",
-            "app_access_status": "Active",
-        },
-        "name",
-    )
-
-    trainer_name = frappe.db.get_value(
-        "Club100 Trainer",
-        {
-            "user": user,
-            "status": "Active",
-        },
-        "name",
-    )
-
-    updated = []
-
-    if member_name:
-        member_installed_on = frappe.db.get_value(
-            "Club100 Member",
-            member_name,
-            "pwa_installed_on",
-        )
-
-        values = {
-            "pwa_installed": 1,
-        }
-
-        if not member_installed_on:
-            values["pwa_installed_on"] = installed_on
-
-        frappe.db.set_value(
-            "Club100 Member",
-            member_name,
-            values,
-            update_modified=False,
-        )
-
-        updated.append("member")
-
-    if trainer_name:
-        trainer_installed_on = frappe.db.get_value(
-            "Club100 Trainer",
-            trainer_name,
-            "pwa_installed_on",
-        )
-
-        values = {
-            "pwa_installed": 1,
-        }
-
-        if not trainer_installed_on:
-            values["pwa_installed_on"] = installed_on
-
-        frappe.db.set_value(
-            "Club100 Trainer",
-            trainer_name,
-            values,
-            update_modified=False,
-        )
-
-        updated.append("trainer")
-
-    if not updated:
-        frappe.throw(
-            "This account does not have active Club100 app access.",
-            frappe.PermissionError,
-        )
-
-    return {
-        "success": True,
-        "updated": updated,
     }

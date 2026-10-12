@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 0,
+ "autoname": "format:C100-SOC-{#####}",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "society_name",
+  "city_area",
+  "organization",
+  "status",
+  "open_interest_count",
+  "confirmed_interest_count",
+  "society_key",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "society_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Society Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "city_area",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "City / Area",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Link",
+   "label": "Organization",
+   "options": "Customer"
+  },
+  {
+   "default": "Interest Gathering",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Interest Gathering\nPlanning\nActive\nInactive",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "open_interest_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Open Interest",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "confirmed_interest_count",
+   "fieldtype": "Int",
+   "label": "Confirmed Interest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "society_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Society Key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "Club100 Core",
+ "name": "Club100 Society",
+ "naming_rule": "Expression (old style)",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "society_name,city_area",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

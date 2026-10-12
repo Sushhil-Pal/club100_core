@@ -23,6 +23,8 @@
   "joining_date",
   "status",
   "app_access_status",
+  "app_registration_token_hash",
+  "app_registration_token_expires_on",
   "first_app_access_on",
   "onboarding_status",
   "fitness_goal",
@@ -147,6 +149,20 @@
    "fieldtype": "Select",
    "label": "App Access Status",
    "options": "Disabled\nFirst Time\nActive"
+  },
+  {
+   "fieldname": "app_registration_token_hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "App Registration Token Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "app_registration_token_expires_on",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "App Registration Token Expires On",
+   "read_only": 1
   },
   {
    "fieldname": "first_app_access_on",
