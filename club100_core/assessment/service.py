@@ -24,6 +24,9 @@ def _validate_assessment_mode(assessment_mode):
 def _get_assessment(
     assessment_id,
     expected_assessment_mode=None,
+    expected_member_id=None,
+    expected_enrollment_id=None,
+    expected_status=None,
 ):
     assessment_id = (
         assessment_id or ""
@@ -65,7 +68,111 @@ def _get_assessment(
                 frappe.DoesNotExistError,
             )
 
+    if (
+        expected_member_id
+        and doc.member != expected_member_id
+    ):
+        frappe.throw(
+            "Assessment not found",
+            frappe.DoesNotExistError,
+        )
+
+    if (
+        expected_enrollment_id
+        and doc.enrollment
+        != expected_enrollment_id
+    ):
+        frappe.throw(
+            "Assessment not found",
+            frappe.DoesNotExistError,
+        )
+
+    if (
+        expected_status
+        and doc.status != expected_status
+    ):
+        frappe.throw(
+            "Assessment not found",
+            frappe.DoesNotExistError,
+        )
+
     return doc
+
+
+def _validate_enrollment_context(
+    member_id,
+    enrollment_id,
+    program_id=None,
+):
+    if not enrollment_id:
+        return program_id
+
+    enrollment = frappe.db.get_value(
+        "Club100 Enrollment",
+        enrollment_id,
+        [
+            "name",
+            "member",
+            "program",
+        ],
+        as_dict=True,
+    )
+
+    if not enrollment:
+        frappe.throw(
+            "Enrollment not found",
+            frappe.DoesNotExistError,
+        )
+
+    if enrollment.member != member_id:
+        frappe.throw(
+            "Enrollment does not belong to this member.",
+            frappe.PermissionError,
+        )
+
+    if (
+        program_id
+        and enrollment.program != program_id
+    ):
+        frappe.throw(
+            "Enrollment and program do not match.",
+            frappe.ValidationError,
+        )
+
+    return enrollment.program
+
+
+def _update_enrollment_assessment_links(doc):
+    if (
+        doc.status != "Completed"
+        or not doc.enrollment
+    ):
+        return
+
+    values = {
+        "latest_assessment": doc.name,
+    }
+
+    baseline_assessment = frappe.db.get_value(
+        "Club100 Enrollment",
+        doc.enrollment,
+        "baseline_assessment",
+    )
+
+    if (
+        doc.assessment_type == "Baseline"
+        and not baseline_assessment
+    ):
+        values["baseline_assessment"] = (
+            doc.name
+        )
+
+    frappe.db.set_value(
+        "Club100 Enrollment",
+        doc.enrollment,
+        values,
+        update_modified=False,
+    )
 
 
 def start_assessment(
@@ -74,6 +181,9 @@ def start_assessment(
     delivery_mode="Offline",
     assessment_mode="Trainer Led",
     template_code=None,
+    enrollment_id=None,
+    program_id=None,
+    safety_acknowledged_on=None,
 ):
     member_id = (
         member_id or ""
@@ -101,21 +211,36 @@ def start_assessment(
             frappe.DoesNotExistError,
         )
 
+    program_id = _validate_enrollment_context(
+        member_id=member_id,
+        enrollment_id=enrollment_id,
+        program_id=program_id,
+    )
+
     # Resume only a draft belonging to the same assessment mode.
-    # This prevents a future Self Assessment draft from being
-    # resumed by the trainer workflow, and vice versa.
+    # If an enrollment is supplied, also scope the draft to that
+    # membership so a draft from a previous membership is not reused.
+    draft_filters = {
+        "member": member_id,
+        "status": "Draft",
+        "assessment_mode": assessment_mode,
+    }
+
+    if enrollment_id:
+        draft_filters["enrollment"] = (
+            enrollment_id
+        )
+
     existing_draft = frappe.db.get_value(
         "Club100 Assessment",
-        {
-            "member": member_id,
-            "status": "Draft",
-            "assessment_mode": assessment_mode,
-        },
+        draft_filters,
         [
             "name",
             "assessment_type",
             "assessment_date",
             "template",
+            "enrollment",
+            "program",
         ],
         order_by="modified desc",
         as_dict=True,
@@ -132,23 +257,40 @@ def start_assessment(
                     "Draft",
                 "assessmentType":
                     existing_draft.assessment_type,
+                "assessmentMode":
+                    assessment_mode,
                 "assessmentDate":
                     existing_draft.assessment_date,
                 "template":
                     existing_draft.template,
+                "enrollmentId":
+                    existing_draft.enrollment,
+                "programId":
+                    existing_draft.program,
             },
             "resumed": True,
         }
 
-    # Preserve the current Baseline/Reassessment behavior during
-    # this refactor. Enrollment/program-aware classification will
-    # be introduced separately after the trainer flow is verified.
+    # New enrollment-aware flows classify Baseline/Reassessment within
+    # the membership. Legacy trainer calls that do not provide an
+    # enrollment keep the existing member-wide behavior.
+    completed_filters = {
+        "member": member_id,
+        "status": "Completed",
+    }
+
+    if enrollment_id:
+        completed_filters["enrollment"] = (
+            enrollment_id
+        )
+    elif program_id:
+        completed_filters["program"] = (
+            program_id
+        )
+
     completed_count = frappe.db.count(
         "Club100 Assessment",
-        {
-            "member": member_id,
-            "status": "Completed",
-        },
+        completed_filters,
     )
 
     assessment_type = (
@@ -177,40 +319,45 @@ def start_assessment(
 
     if not template:
         frappe.throw(
-            "No active default assessment template is configured.",
+            "No active assessment template is configured for this assessment mode.",
             frappe.ValidationError,
         )
 
-    doc = frappe.get_doc(
-        {
-            "doctype":
-                "Club100 Assessment",
+    payload = {
+        "doctype":
+            "Club100 Assessment",
+        "member":
+            member_id,
+        "assessment_type":
+            assessment_type,
+        "assessment_mode":
+            assessment_mode,
+        "assessment_date":
+            frappe.utils.today(),
+        "assessor":
+            assessor,
+        "delivery_mode":
+            delivery_mode,
+        "template":
+            template,
+        "status":
+            "Draft",
+    }
 
-            "member":
-                member_id,
+    if enrollment_id:
+        payload["enrollment"] = (
+            enrollment_id
+        )
 
-            "assessment_type":
-                assessment_type,
+    if program_id:
+        payload["program"] = program_id
 
-            "assessment_mode":
-                assessment_mode,
+    if safety_acknowledged_on:
+        payload["safety_acknowledged_on"] = (
+            safety_acknowledged_on
+        )
 
-            "assessment_date":
-                frappe.utils.today(),
-
-            "assessor":
-                assessor,
-
-            "delivery_mode":
-                delivery_mode,
-
-            "template":
-                template,
-
-            "status":
-                "Draft",
-        }
-    )
+    doc = frappe.get_doc(payload)
 
     doc.insert(
         ignore_permissions=True
@@ -223,10 +370,16 @@ def start_assessment(
             "status": doc.status,
             "assessmentType":
                 doc.assessment_type,
+            "assessmentMode":
+                doc.assessment_mode,
             "assessmentDate":
                 doc.assessment_date,
             "template":
                 doc.template,
+            "enrollmentId":
+                doc.enrollment,
+            "programId":
+                doc.program,
         },
         "resumed": False,
     }
@@ -235,10 +388,22 @@ def start_assessment(
 def assessment_detail(
     assessment_id,
     expected_assessment_mode=None,
+    expected_member_id=None,
+    expected_enrollment_id=None,
+    expected_status=None,
 ):
     doc = _get_assessment(
-        assessment_id,
-        expected_assessment_mode,
+        assessment_id=assessment_id,
+        expected_assessment_mode=(
+            expected_assessment_mode
+        ),
+        expected_member_id=(
+            expected_member_id
+        ),
+        expected_enrollment_id=(
+            expected_enrollment_id
+        ),
+        expected_status=expected_status,
     )
 
     member = frappe.db.get_value(
@@ -264,6 +429,7 @@ def assessment_detail(
                 "options",
                 "description",
                 "instructions",
+                "equipment_required",
             ],
             as_dict=True,
         )
@@ -273,39 +439,43 @@ def assessment_detail(
                 "rowId": row.name,
                 "input": row.input,
                 "inputName": row.input_name,
-                "inputCode":
+                "inputCode": (
                     master.input_code
                     if master
-                    else None,
+                    else None
+                ),
                 "category": row.category,
                 "resultType":
                     row.result_type,
                 "unit": row.unit,
                 "required":
                     bool(row.required),
-
                 "value": row.value,
                 "hasValue":
                     bool(row.is_entered),
-
                 "textValue":
                     row.text_value,
                 "notes": row.notes,
-
-                "options":
+                "options": (
                     master.options
                     if master
-                    else None,
-
-                "description":
+                    else None
+                ),
+                "description": (
                     master.description
                     if master
-                    else None,
-
-                "instructions":
+                    else None
+                ),
+                "instructions": (
                     master.instructions
                     if master
-                    else None,
+                    else None
+                ),
+                "equipmentRequired": (
+                    master.equipment_required
+                    if master
+                    else None
+                ),
             }
         )
 
@@ -323,6 +493,8 @@ def assessment_detail(
             },
             "assessmentType":
                 doc.assessment_type,
+            "assessmentMode":
+                doc.assessment_mode,
             "assessmentDate":
                 doc.assessment_date,
             "deliveryMode":
@@ -331,6 +503,12 @@ def assessment_detail(
                 doc.status,
             "template":
                 doc.template,
+            "enrollmentId":
+                doc.enrollment,
+            "programId":
+                doc.program,
+            "safetyAcknowledgedOn":
+                doc.safety_acknowledged_on,
             "inputs":
                 inputs,
         }
@@ -342,6 +520,9 @@ def save_assessment(
     inputs,
     status="Draft",
     expected_assessment_mode=None,
+    expected_member_id=None,
+    expected_enrollment_id=None,
+    expected_current_status=None,
 ):
     status = (
         status or "Draft"
@@ -362,8 +543,19 @@ def save_assessment(
     inputs = inputs or []
 
     doc = _get_assessment(
-        assessment_id,
-        expected_assessment_mode,
+        assessment_id=assessment_id,
+        expected_assessment_mode=(
+            expected_assessment_mode
+        ),
+        expected_member_id=(
+            expected_member_id
+        ),
+        expected_enrollment_id=(
+            expected_enrollment_id
+        ),
+        expected_status=(
+            expected_current_status
+        ),
     )
 
     rows_by_name = {
@@ -438,11 +630,23 @@ def save_assessment(
         ignore_permissions=True
     )
 
+    _update_enrollment_assessment_links(
+        doc
+    )
+
     return {
         "success": True,
         "assessment": {
             "id": doc.name,
             "status": doc.status,
+            "assessmentType":
+                doc.assessment_type,
+            "assessmentMode":
+                doc.assessment_mode,
+            "enrollmentId":
+                doc.enrollment,
+            "programId":
+                doc.program,
             "fitnessScore":
                 doc.fitness_score,
             "fitnessLevel":

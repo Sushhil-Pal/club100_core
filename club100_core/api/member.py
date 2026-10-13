@@ -1,5 +1,7 @@
 import frappe
 
+from club100_core.assessment import service as assessment_service
+
 
 def _get_current_member():
     user = frappe.session.user
@@ -246,6 +248,524 @@ def complete_onboarding(
                 member.onboarding_completed_on,
         },
     }
+
+
+SELF_ASSESSMENT_TEMPLATE_CODE = "SELF"
+SELF_ASSESSMENT_PLAN_MODES = (
+    "Self Assessment",
+    "Both",
+)
+
+
+def _get_self_assessment_membership(member):
+    if member.status != "Active":
+        return None
+
+    today = frappe.utils.getdate(
+        frappe.utils.today()
+    )
+
+    enrollments = frappe.get_all(
+        "Club100 Enrollment",
+        filters={
+            "member": member.name,
+            "status": "Active",
+        },
+        fields=[
+            "name",
+            "program",
+            "plan",
+            "pricing_model",
+            "start_date",
+            "end_date",
+            "membership_duration_months",
+        ],
+        order_by=(
+            "start_date desc, "
+            "enrollment_date desc, "
+            "creation desc"
+        ),
+    )
+
+    for enrollment in enrollments:
+        if enrollment.pricing_model != "Online Plan":
+            continue
+
+        if not enrollment.plan:
+            continue
+
+        if (
+            enrollment.start_date
+            and frappe.utils.getdate(
+                enrollment.start_date
+            ) > today
+        ):
+            continue
+
+        if (
+            enrollment.end_date
+            and frappe.utils.getdate(
+                enrollment.end_date
+            ) < today
+        ):
+            continue
+
+        plan = frappe.db.get_value(
+            "Club100 Plan",
+            enrollment.plan,
+            [
+                "name",
+                "plan_name",
+                "plan_code",
+                "delivery_type",
+                "assessment_mode",
+            ],
+            as_dict=True,
+        )
+
+        if not plan:
+            continue
+
+        if (
+            plan.assessment_mode
+            not in SELF_ASSESSMENT_PLAN_MODES
+        ):
+            continue
+
+        program = frappe.db.get_value(
+            "Club100 Program",
+            enrollment.program,
+            [
+                "name",
+                "program_name",
+                "program_code",
+                "assessment_included",
+                "reassessment_included",
+                "reassessment_interval_months",
+            ],
+            as_dict=True,
+        )
+
+        if not program:
+            continue
+
+        if not program.assessment_included:
+            continue
+
+        return {
+            "enrollment": enrollment,
+            "plan": plan,
+            "program": program,
+        }
+
+    return None
+
+
+def _resolve_self_assessment_context(member):
+    if member.status != "Active":
+        return {
+            "allowed": False,
+            "reason": "Your Club100 membership is not active.",
+        }
+
+    if (
+        member.onboarding_status != "Completed"
+        or not member.date_of_birth
+        or not member.gender
+    ):
+        return {
+            "allowed": False,
+            "reason": (
+                "Complete your member onboarding before starting "
+                "the fitness assessment."
+            ),
+        }
+
+    membership = _get_self_assessment_membership(
+        member
+    )
+
+    if not membership:
+        return {
+            "allowed": False,
+            "reason": (
+                "Self Assessment is not available for your current membership."
+            ),
+        }
+
+    enrollment = membership["enrollment"]
+    plan = membership["plan"]
+    program = membership["program"]
+
+    draft = frappe.db.get_value(
+        "Club100 Assessment",
+        {
+            "member": member.name,
+            "enrollment": enrollment.name,
+            "assessment_mode": "Self Assessment",
+            "status": "Draft",
+        },
+        [
+            "name",
+            "assessment_type",
+            "assessment_date",
+            "safety_acknowledged_on",
+        ],
+        order_by="modified desc",
+        as_dict=True,
+    )
+
+    latest = frappe.db.get_value(
+        "Club100 Assessment",
+        {
+            "member": member.name,
+            "enrollment": enrollment.name,
+            "status": "Completed",
+        },
+        [
+            "name",
+            "assessment_type",
+            "assessment_mode",
+            "assessment_date",
+            "fitness_score",
+            "fitness_level",
+        ],
+        order_by=(
+            "assessment_date desc, "
+            "creation desc"
+        ),
+        as_dict=True,
+    )
+
+    interval_months = int(
+        program.reassessment_interval_months
+        or 0
+    )
+
+    next_due_on = None
+    due = False
+
+    if (
+        latest
+        and program.reassessment_included
+    ):
+        if interval_months > 0:
+            next_due_on = frappe.utils.getdate(
+                frappe.utils.add_months(
+                    latest.assessment_date,
+                    interval_months,
+                )
+            )
+
+            due = (
+                frappe.utils.getdate(
+                    frappe.utils.today()
+                )
+                >= next_due_on
+            )
+        else:
+            due = True
+
+    if draft:
+        state = "Draft"
+        can_start = True
+        assessment_type = (
+            draft.assessment_type
+        )
+    elif not latest:
+        state = "Not Started"
+        can_start = True
+        assessment_type = "Baseline"
+    elif not program.reassessment_included:
+        state = "Current"
+        can_start = False
+        assessment_type = "Reassessment"
+    elif due:
+        state = "Due"
+        can_start = True
+        assessment_type = "Reassessment"
+    else:
+        state = "Current"
+        can_start = False
+        assessment_type = "Reassessment"
+
+    return {
+        "allowed": True,
+        "assessmentMode": "Self Assessment",
+        "state": state,
+        "canStart": can_start,
+        "assessmentType": assessment_type,
+        "draftAssessmentId": (
+            draft.name
+            if draft
+            else None
+        ),
+        "safetyAcknowledgementRequired": (
+            not bool(draft)
+        ),
+        "latestAssessment": (
+            {
+                "id": latest.name,
+                "type": latest.assessment_type,
+                "mode": latest.assessment_mode,
+                "date": latest.assessment_date,
+                "fitnessScore": latest.fitness_score,
+                "fitnessLevel": latest.fitness_level,
+            }
+            if latest
+            else None
+        ),
+        "nextAssessmentDueOn": (
+            str(next_due_on)
+            if next_due_on
+            else None
+        ),
+        "reassessmentIntervalMonths": (
+            interval_months
+        ),
+        "enrollment": {
+            "id": enrollment.name,
+            "status": "Active",
+            "startDate": enrollment.start_date,
+            "endDate": enrollment.end_date,
+            "durationMonths": (
+                enrollment.membership_duration_months
+            ),
+            "pricingModel": (
+                enrollment.pricing_model
+            ),
+        },
+        "program": {
+            "id": program.name,
+            "code": program.program_code,
+            "name": program.program_name,
+            "assessmentIncluded": bool(
+                program.assessment_included
+            ),
+            "reassessmentIncluded": bool(
+                program.reassessment_included
+            ),
+        },
+        "plan": {
+            "id": plan.name,
+            "code": plan.plan_code,
+            "name": plan.plan_name,
+            "deliveryType": plan.delivery_type,
+            "assessmentMode": plan.assessment_mode,
+        },
+        "_membership": membership,
+    }
+
+
+def _public_self_assessment_context(context):
+    if not context.get("allowed"):
+        return context
+
+    return {
+        key: value
+        for key, value in context.items()
+        if key != "_membership"
+    }
+
+
+@frappe.whitelist(methods=["GET"])
+def assessment_context():
+    member = _get_current_member()
+
+    return _public_self_assessment_context(
+        _resolve_self_assessment_context(
+            member
+        )
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def start_self_assessment(
+    safety_acknowledged=0,
+):
+    member = _get_current_member()
+
+    context = _resolve_self_assessment_context(
+        member
+    )
+
+    if not context.get("allowed"):
+        frappe.throw(
+            context.get("reason")
+            or "Self Assessment is not available.",
+            frappe.ValidationError,
+        )
+
+    membership = context["_membership"]
+    enrollment = membership["enrollment"]
+    program = membership["program"]
+
+    if not context.get("draftAssessmentId"):
+        if not context.get("canStart"):
+            if context.get("nextAssessmentDueOn"):
+                frappe.throw(
+                    "Your next self reassessment is due on "
+                    f"{context['nextAssessmentDueOn']}.",
+                    frappe.ValidationError,
+                )
+
+            frappe.throw(
+                "A new self assessment is not available yet.",
+                frappe.ValidationError,
+            )
+
+        if not frappe.utils.cint(
+            safety_acknowledged
+        ):
+            frappe.throw(
+                "Safety acknowledgement is required before starting the assessment.",
+                frappe.ValidationError,
+            )
+
+    result = assessment_service.start_assessment(
+        member_id=member.name,
+        assessor=None,
+        delivery_mode="Online",
+        assessment_mode="Self Assessment",
+        template_code=(
+            SELF_ASSESSMENT_TEMPLATE_CODE
+        ),
+        enrollment_id=enrollment.name,
+        program_id=program.name,
+        safety_acknowledged_on=(
+            frappe.utils.now_datetime()
+            if not context.get(
+                "draftAssessmentId"
+            )
+            else None
+        ),
+    )
+
+    return result
+
+
+@frappe.whitelist(methods=["GET"])
+def self_assessment_detail(assessment_id):
+    member = _get_current_member()
+
+    context = _resolve_self_assessment_context(
+        member
+    )
+
+    if not context.get("allowed"):
+        frappe.throw(
+            context.get("reason")
+            or "Self Assessment is not available.",
+            frappe.ValidationError,
+        )
+
+    enrollment = context[
+        "_membership"
+    ]["enrollment"]
+
+    return assessment_service.assessment_detail(
+        assessment_id=assessment_id,
+        expected_assessment_mode=(
+            "Self Assessment"
+        ),
+        expected_member_id=member.name,
+        expected_enrollment_id=(
+            enrollment.name
+        ),
+        expected_status="Draft",
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def save_self_assessment(
+    assessment_id,
+    inputs,
+):
+    member = _get_current_member()
+
+    context = _resolve_self_assessment_context(
+        member
+    )
+
+    if not context.get("allowed"):
+        frappe.throw(
+            context.get("reason")
+            or "Self Assessment is not available.",
+            frappe.ValidationError,
+        )
+
+    enrollment = context[
+        "_membership"
+    ]["enrollment"]
+
+    result = assessment_service.save_assessment(
+        assessment_id=assessment_id,
+        inputs=inputs,
+        status="Draft",
+        expected_assessment_mode=(
+            "Self Assessment"
+        ),
+        expected_member_id=member.name,
+        expected_enrollment_id=(
+            enrollment.name
+        ),
+        expected_current_status="Draft",
+    )
+
+    # Draft assessments may have an internally calculated partial score.
+    # Do not expose it as a member-facing Fitness Score until completion.
+    result["assessment"]["fitnessScore"] = None
+    result["assessment"]["fitnessLevel"] = None
+
+    return result
+
+
+@frappe.whitelist(methods=["POST"])
+def complete_self_assessment(
+    assessment_id,
+    inputs,
+):
+    member = _get_current_member()
+
+    context = _resolve_self_assessment_context(
+        member
+    )
+
+    if not context.get("allowed"):
+        frappe.throw(
+            context.get("reason")
+            or "Self Assessment is not available.",
+            frappe.ValidationError,
+        )
+
+    enrollment = context[
+        "_membership"
+    ]["enrollment"]
+
+    result = assessment_service.save_assessment(
+        assessment_id=assessment_id,
+        inputs=inputs,
+        status="Completed",
+        expected_assessment_mode=(
+            "Self Assessment"
+        ),
+        expected_member_id=member.name,
+        expected_enrollment_id=(
+            enrollment.name
+        ),
+        expected_current_status="Draft",
+    )
+
+    result["assessmentContext"] = (
+        _public_self_assessment_context(
+            _resolve_self_assessment_context(
+                member
+            )
+        )
+    )
+
+    return result
+
 
 @frappe.whitelist(methods=["GET"])
 def progress():
@@ -600,15 +1120,23 @@ def assessment_result(assessment_id):
     # Immediately previous completed assessment
     # ---------------------------------------------------------
 
+    completed_filters = {
+        "member": member.name,
+        "status": "Completed",
+    }
+
+    if doc.enrollment:
+        completed_filters["enrollment"] = (
+            doc.enrollment
+        )
+    elif doc.program:
+        completed_filters["program"] = (
+            doc.program
+        )
+
     completed = frappe.get_all(
         "Club100 Assessment",
-        filters={
-            "member":
-                member.name,
-
-            "status":
-                "Completed",
-        },
+        filters=completed_filters,
         fields=[
             "name",
             "assessment_type",
@@ -738,6 +1266,15 @@ def assessment_result(assessment_id):
 
             "assessmentType":
                 doc.assessment_type,
+
+            "assessmentMode":
+                doc.assessment_mode,
+
+            "enrollmentId":
+                doc.enrollment,
+
+            "programId":
+                doc.program,
 
             "assessmentDate":
                 doc.assessment_date,
