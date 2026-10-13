@@ -12,6 +12,7 @@
   "max_session_capacity",
   "coach_led",
   "enhanced_progress_review",
+  "assessment_mode",
   "short_description",
   "display_order",
   "publish_to_website",
@@ -59,6 +60,14 @@
    "fieldname": "enhanced_progress_review",
    "fieldtype": "Check",
    "label": "Enhanced Progress Review"
+  },
+  {
+   "default": "Trainer Led",
+   "fieldname": "assessment_mode",
+   "fieldtype": "Select",
+   "label": "Assessment Mode",
+   "options": "Trainer Led\nSelf Assessment\nBoth",
+   "reqd": 1
   },
   {
    "fieldname": "short_description",

@@ -13,9 +13,11 @@
   "enrollment",
   "program",
   "assessment_type",
+  "assessment_mode",
   "assessment_date",
   "assessor",
   "delivery_mode",
+  "safety_acknowledged_on",
   "fitness_score",
   "fitness_level",
   "inputs",
@@ -54,6 +56,15 @@
    "reqd": 1
   },
   {
+   "default": "Trainer Led",
+   "fieldname": "assessment_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Assessment Mode",
+   "options": "Trainer Led\nSelf Assessment",
+   "reqd": 1
+  },
+  {
    "fieldname": "assessment_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -73,6 +84,12 @@
    "label": "Delivery Mode",
    "options": "Offline\nOnline",
    "reqd": 1
+  },
+  {
+   "fieldname": "safety_acknowledged_on",
+   "fieldtype": "Datetime",
+   "label": "Safety Acknowledged On",
+   "read_only": 1
   },
   {
    "fieldname": "fitness_score",

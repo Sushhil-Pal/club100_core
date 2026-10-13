@@ -10,7 +10,7 @@ from frappe.utils import add_days, add_months, add_to_date, cint, getdate, now_d
 
 
 PROGRAMS = {
-    "general-fitness": "General Fitness",
+    "general-fitness": "Everyday Fitness",
     "weight-management": "Weight Management",
     "active-50": "Active 50+",
     "sports-fitness": "Sports Fitness",
@@ -25,6 +25,7 @@ PLANS = {
         "max_session_capacity": 0,
         "coach_led": 0,
         "enhanced_progress_review": 0,
+        "assessment_mode": "Self Assessment",
         "short_description": (
             "Pre-recorded Club100 sessions for members who prefer "
             "to train independently."
@@ -37,6 +38,7 @@ PLANS = {
         "max_session_capacity": 25,
         "coach_led": 1,
         "enhanced_progress_review": 0,
+        "assessment_mode": "Trainer Led",
         "short_description": (
             "Live coached sessions with a maximum of 25 members."
         ),
@@ -48,6 +50,7 @@ PLANS = {
         "max_session_capacity": 15,
         "coach_led": 1,
         "enhanced_progress_review": 0,
+        "assessment_mode": "Trainer Led",
         "short_description": (
             "Live coached sessions with a maximum of 15 members "
             "for more coach interaction."
@@ -60,6 +63,7 @@ PLANS = {
         "max_session_capacity": 10,
         "coach_led": 1,
         "enhanced_progress_review": 0,
+        "assessment_mode": "Trainer Led",
         "short_description": (
             "Live coached sessions with a maximum of 10 members "
             "for higher individual attention and feedback."
@@ -72,6 +76,7 @@ PLANS = {
         "max_session_capacity": 5,
         "coach_led": 1,
         "enhanced_progress_review": 1,
+        "assessment_mode": "Trainer Led",
         "short_description": (
             "Live coached sessions with a maximum of 5 members, "
             "plus closer progress monitoring and coach feedback."
@@ -166,6 +171,7 @@ def seed_website_programs():
 
         doc.assessment_included = 1
         doc.reassessment_included = 1
+        doc.reassessment_interval_months = 3
         doc.payment_required = 1
 
         doc.publish_to_app = 1
@@ -234,6 +240,9 @@ def seed_website_plans():
         doc.enhanced_progress_review = (
             config["enhanced_progress_review"]
         )
+        doc.assessment_mode = (
+            config["assessment_mode"]
+        )
         doc.short_description = (
             config["short_description"]
         )
@@ -253,6 +262,8 @@ def seed_website_plans():
             "action": action,
             "max_session_capacity":
                 doc.max_session_capacity,
+            "assessment_mode":
+                doc.assessment_mode,
         })
 
     frappe.db.commit()

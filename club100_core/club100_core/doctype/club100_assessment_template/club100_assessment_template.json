@@ -12,6 +12,7 @@
   "template_code",
   "version",
   "delivery_mode",
+  "assessment_mode",
   "purpose",
   "is_default",
   "active",
@@ -47,6 +48,14 @@
    "fieldtype": "Select",
    "label": "Delivery Mode",
    "options": "\nOffline\nOnline\nHybrid"
+  },
+  {
+   "default": "Trainer Led",
+   "fieldname": "assessment_mode",
+   "fieldtype": "Select",
+   "label": "Assessment Mode",
+   "options": "Trainer Led\nSelf Assessment",
+   "reqd": 1
   },
   {
    "fieldname": "purpose",

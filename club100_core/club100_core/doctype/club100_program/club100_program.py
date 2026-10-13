@@ -5,6 +5,7 @@ from frappe.model.document import Document
 class Club100Program(Document):
     def validate(self):
         self.validate_numbers()
+        self.validate_reassessment_interval()
         self.validate_price()
 
     def validate_numbers(self):
@@ -19,6 +20,22 @@ class Club100Program(Document):
 
         if self.default_cohort_capacity <= 0:
             frappe.throw("Default Cohort Capacity must be greater than 0.")
+
+    def validate_reassessment_interval(self):
+        interval = int(
+            self.reassessment_interval_months or 0
+        )
+
+        if interval < 0:
+            frappe.throw(
+                "Reassessment Interval (Months) cannot be negative."
+            )
+
+        if self.reassessment_included and interval <= 0:
+            frappe.throw(
+                "Reassessment Interval (Months) must be greater than 0 "
+                "when Reassessment Included is enabled."
+            )
 
     def validate_price(self):
         """

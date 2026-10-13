@@ -17,6 +17,7 @@
   "default_cohort_capacity",
   "assessment_included",
   "reassessment_included",
+  "reassessment_interval_months",
   "payment_required",
   "selling_item",
   "standard_price",
@@ -94,6 +95,11 @@
    "fieldname": "reassessment_included",
    "fieldtype": "Check",
    "label": "Reassessment Included"
+  },
+  {
+   "fieldname": "reassessment_interval_months",
+   "fieldtype": "Int",
+   "label": "Reassessment Interval (Months)"
   },
   {
    "default": "1",
