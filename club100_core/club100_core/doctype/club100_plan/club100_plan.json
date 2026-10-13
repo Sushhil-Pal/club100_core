@@ -13,6 +13,7 @@
   "coach_led",
   "enhanced_progress_review",
   "assessment_mode",
+  "workout_access_after_minutes",
   "short_description",
   "display_order",
   "publish_to_website",
@@ -68,6 +69,12 @@
    "label": "Assessment Mode",
    "options": "Trainer Led\nSelf Assessment\nBoth",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "workout_access_after_minutes",
+   "fieldtype": "Int",
+   "label": "Workout Access After Session (Minutes)"
   },
   {
    "fieldname": "short_description",

@@ -27,9 +27,10 @@ PLANS = {
         "enhanced_progress_review": 0,
         "assessment_mode": "Self Assessment",
         "short_description": (
-            "Pre-recorded Club100 sessions for members who prefer "
+            "Scheduled guided Club100 workouts for members who prefer "
             "to train independently."
         ),
+        "workout_access_after_minutes": 60,
         "display_order": 10,
     },
     "group": {
@@ -243,6 +244,12 @@ def seed_website_plans():
         doc.assessment_mode = (
             config["assessment_mode"]
         )
+        doc.workout_access_after_minutes = (
+            config.get(
+                "workout_access_after_minutes",
+                0,
+            )
+        )
         doc.short_description = (
             config["short_description"]
         )
@@ -264,6 +271,8 @@ def seed_website_plans():
                 doc.max_session_capacity,
             "assessment_mode":
                 doc.assessment_mode,
+            "workout_access_after_minutes":
+                doc.workout_access_after_minutes,
         })
 
     frappe.db.commit()

@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "cohort",
+  "plan",
   "program",
   "trainer",
   "workout_content",
@@ -29,8 +30,14 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Cohort",
-   "options": "Club100 Cohort",
-   "reqd": 1
+   "options": "Club100 Cohort"
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Plan",
+   "options": "Club100 Plan"
   },
   {
    "fieldname": "program",
@@ -45,8 +52,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Trainer",
-   "options": "Club100 Trainer",
-   "reqd": 1
+   "options": "Club100 Trainer"
   },
   {
    "fieldname": "workout_content",

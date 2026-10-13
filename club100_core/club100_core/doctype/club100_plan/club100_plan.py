@@ -8,6 +8,7 @@ class Club100Plan(Document):
     def validate(self):
         self.normalize_plan_code()
         self.validate_delivery_configuration()
+        self.validate_workout_access_window()
 
     def normalize_plan_code(self):
         self.plan_code = str(
@@ -50,3 +51,13 @@ class Club100Plan(Document):
                 frappe.throw(
                     "Live Online plans must be marked Coach Led."
                 )
+
+    def validate_workout_access_window(self):
+        minutes = int(
+            self.workout_access_after_minutes or 0
+        )
+
+        if minutes < 0:
+            frappe.throw(
+                "Workout Access After Session (Minutes) cannot be negative."
+            )
