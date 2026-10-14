@@ -265,7 +265,8 @@ app_license = "mit"
 scheduler_events = {
     "cron": {
         "*/5 * * * *": [
-            "club100_core.api.session_notifications.process_session_reminders"
+            "club100_core.api.session_notifications.process_session_reminders",
+            "club100_core.api.self_workout_notifications.process_self_workout_reminders"
         ],
     },
 }
