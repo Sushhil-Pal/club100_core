@@ -1,0 +1,86 @@
+{
+ "doctype": "DocType",
+ "name": "Club100 Self Workout Activity",
+ "module": "Club100 Core",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "field_order": [
+  "member",
+  "enrollment",
+  "workout_id",
+  "workout_content",
+  "scheduled_at",
+  "started_at",
+  "completed_at",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "label": "Member",
+   "options": "Club100 Member",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "enrollment",
+   "fieldtype": "Link",
+   "label": "Enrollment",
+   "options": "Club100 Enrollment",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "workout_id",
+   "fieldtype": "Data",
+   "label": "Workout Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "workout_content",
+   "fieldtype": "Link",
+   "label": "Workout Content",
+   "options": "Club100 Workout Content",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scheduled_at",
+   "fieldtype": "Datetime",
+   "label": "Scheduled At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Started\nCompleted",
+   "reqd": 1,
+   "in_list_view": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 0
+  }
+ ],
+ "actions": [],
+ "links": [],
+ "states": []
+}
