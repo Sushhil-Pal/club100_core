@@ -206,6 +206,69 @@ def _build(enrollment, plan, cycle, content_ids, content, ordinal, scheduled_at,
     return result
 
 
+
+
+@frappe.whitelist(methods=["GET"])
+def get_self_workout_schedule_settings(enrollment_id):
+    """Return the member-owned weekly schedule without requiring it to exist."""
+    enrollment = _enrollment(_get_current_member(), enrollment_id)
+    plan = frappe.db.get_value("Club100 Plan", enrollment.plan,
+        ["plan_code", "self_workouts_per_week", "self_workout_cycle"], as_dict=True)
+    if not plan or plan.plan_code != "self":
+        frappe.throw("Enrollment is not a Self plan", frappe.ValidationError)
+    count = cint(plan.self_workouts_per_week)
+    if not 1 <= count <= 7 or not plan.self_workout_cycle:
+        frappe.throw("Self plan is not fully configured", frappe.ValidationError)
+    baseline = frappe.get_all("Club100 Self Workout Slot",
+        filters={"parent": enrollment.name, "parenttype": "Club100 Enrollment",
+                 "parentfield": "self_workout_slots"},
+        fields=["weekday", "start_time"], order_by="idx asc")
+    revisions = frappe.get_all("Club100 Self Schedule Revision",
+        filters={"enrollment": enrollment.name},
+        fields=["name", "effective_from"], order_by="effective_from asc, creation asc")
+    today = getdate(now_datetime())
+    current = baseline
+    pending = []
+    for rev in revisions:
+        rows = frappe.get_all("Club100 Self Workout Slot",
+            filters={"parent": rev.name, "parenttype": "Club100 Self Schedule Revision",
+                     "parentfield": "self_workout_slots"},
+            fields=["weekday", "start_time"], order_by="idx asc")
+        if getdate(rev.effective_from) <= today:
+            current = rows
+        else:
+            pending.append({"effectiveFrom": str(rev.effective_from),
+                            "slots": [{"weekday": r.weekday, "start_time": str(r.start_time)} for r in rows]})
+    return {"enrollment": enrollment.name, "workoutsPerWeek": count,
+            "configured": len(baseline) == count,
+            "slots": [{"weekday": r.weekday, "start_time": str(r.start_time)} for r in current],
+            "pendingRevisions": pending,
+            "earliestChangeDate": str(today + timedelta(days=1))}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_initial_self_workout_schedule(enrollment_id, slots):
+    """Only the owning member may populate an empty enrollment schedule once."""
+    enrollment = _enrollment(_get_current_member(), enrollment_id)
+    plan = frappe.db.get_value("Club100 Plan", enrollment.plan,
+        ["plan_code", "self_workouts_per_week", "self_workout_cycle"], as_dict=True)
+    if not plan or plan.plan_code != "self" or not plan.self_workout_cycle:
+        frappe.throw("Self plan is not fully configured", frappe.ValidationError)
+    count = cint(plan.self_workouts_per_week)
+    if not 1 <= count <= 7:
+        frappe.throw("Self plan is not fully configured", frappe.ValidationError)
+    parsed = _parse_slots(slots, count)
+    frappe.db.sql("SELECT name FROM `tabClub100 Enrollment` WHERE name=%s FOR UPDATE", enrollment.name)
+    if frappe.db.exists("Club100 Self Workout Slot",
+            {"parent": enrollment.name, "parentfield": "self_workout_slots"}):
+        frappe.throw("Schedule already exists; use schedule revisions", frappe.ValidationError)
+    if frappe.db.exists("Club100 Self Schedule Revision", {"enrollment": enrollment.name}):
+        frappe.throw("Schedule revisions already exist", frappe.ValidationError)
+    doc = frappe.get_doc("Club100 Enrollment", enrollment.name)
+    doc.set("self_workout_slots", parsed)
+    doc.save(ignore_permissions=True)  # Ownership checked above, normal DocType validations still run.
+    return {"enrollment": enrollment.name, "configured": True, "slots": parsed}
+
 @frappe.whitelist(methods=["GET"])
 def list_virtual_workouts(enrollment_id, from_date=None, to_date=None):
     """List metadata for at most 32 consecutive dates (video URL never included)."""
