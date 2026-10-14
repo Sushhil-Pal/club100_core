@@ -14,6 +14,7 @@
   "pricing_model",
   "program",
   "plan",
+  "self_workout_slots",
   "membership_duration_months",
   "monthly_equivalent",
   "amount_payable",
@@ -166,6 +167,13 @@
    "label": "Plan",
    "options": "Club100 Plan",
    "reqd": 0
+  },
+  {
+   "fieldname": "self_workout_slots",
+   "fieldtype": "Table",
+   "label": "Self Workout Schedule",
+   "options": "Club100 Self Workout Slot",
+   "description": "Recurring days and individual start times chosen by this Self member."
   },
   {
    "fieldname": "membership_duration_months",

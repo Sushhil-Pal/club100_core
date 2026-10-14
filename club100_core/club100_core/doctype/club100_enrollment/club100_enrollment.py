@@ -15,6 +15,7 @@ class Club100Enrollment(Document):
         self.set_defaults_from_member()
         self.set_defaults_from_cohort()
         self.validate_pricing_model()
+        self.validate_self_workout_slots()
         self.validate_dates()
         self.validate_sponsorship()
         self.validate_cohort_compatibility()
@@ -165,6 +166,52 @@ class Club100Enrollment(Document):
                     "Society Interest must belong to the same Society "
                     "as the Enrollment."
                 )
+
+    def validate_self_workout_slots(self):
+        rows = list(self.get("self_workout_slots") or [])
+        if not rows:
+            # Keep existing enrollments valid while members are onboarded.
+            return
+
+        if self.pricing_model != "Online Plan" or not self.plan:
+            frappe.throw("Self workout slots require an Online Plan.")
+
+        plan = frappe.db.get_value(
+            "Club100 Plan", self.plan,
+            ["plan_code", "self_workouts_per_week", "self_workout_cycle"],
+            as_dict=True,
+        )
+        if not plan or plan.plan_code != "self":
+            frappe.throw("Workout slots are available only for the Self plan.")
+
+        expected = cint(plan.self_workouts_per_week)
+        if expected < 1 or expected > 7:
+            frappe.throw("Configure Self Workouts Per Week on the Plan (1–7).")
+        if len(rows) != expected:
+            frappe.throw(f"Select exactly {expected} different workout days.")
+        if not plan.self_workout_cycle:
+            frappe.throw("Configure the Self Workout Cycle on the Plan first.")
+
+        cycle = frappe.db.get_value(
+            "Club100 Self Workout Cycle", plan.self_workout_cycle,
+            ["program", "plan", "active"], as_dict=True,
+        )
+        if not cycle or cycle.plan != self.plan or cycle.program != self.program or not cycle.active:
+            frappe.throw("The Plan's active Self Workout Cycle must match this Enrollment's Program.")
+
+        seen = set()
+        for row in rows:
+            if row.weekday in seen:
+                frappe.throw(f"Workout day {row.weekday} can only be selected once.")
+            seen.add(row.weekday)
+            if row.weekday not in (
+                "Monday", "Tuesday", "Wednesday", "Thursday",
+                "Friday", "Saturday", "Sunday",
+            ):
+                frappe.throw("Select a valid weekday for each Self workout slot.")
+            # midnight (00:00:00) is valid; don't use truthiness.
+            if row.start_time is None or str(row.start_time).strip() == "":
+                frappe.throw(f"Set a start time for {row.weekday}.")
 
     def validate_dates(self):
         if self.start_date and self.end_date:
