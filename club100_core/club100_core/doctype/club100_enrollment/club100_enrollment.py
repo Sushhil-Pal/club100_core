@@ -179,7 +179,7 @@ class Club100Enrollment(Document):
 
         plan = frappe.db.get_value(
             "Club100 Plan", self.plan,
-            ["plan_code", "self_workouts_per_week", "self_workout_cycle"],
+            ["plan_code", "self_workouts_per_week"],
             as_dict=True,
         )
         if not plan or plan.plan_code != "self":
@@ -190,15 +190,8 @@ class Club100Enrollment(Document):
             frappe.throw("Configure Self Workouts Per Week on the Plan (1–7).")
         if len(rows) != expected:
             frappe.throw(f"Select exactly {expected} different workout days.")
-        if not plan.self_workout_cycle:
-            frappe.throw("Configure the Self Workout Cycle on the Plan first.")
-
-        cycle = frappe.db.get_value(
-            "Club100 Self Workout Cycle", plan.self_workout_cycle,
-            ["program", "plan", "active"], as_dict=True,
-        )
-        if not cycle or cycle.plan != self.plan or cycle.program != self.program or not cycle.active:
-            frappe.throw("The Plan's active Self Workout Cycle must match this Enrollment's Program.")
+        from club100_core.self_workout_cycle import get_active_self_workout_cycle
+        get_active_self_workout_cycle(self.program, self.plan)
 
         seen = set()
         for row in rows:

@@ -71,21 +71,11 @@ class Club100Plan(Document):
             frappe.throw("Self Workouts Per Week must be between 0 and 7.")
 
         if self.plan_code != "self":
-            if count or self.self_workout_cycle:
+            if count:
                 frappe.throw("Self workout configuration is only valid for the Self plan.")
             return
 
-        # Allow Self plans to be configured incrementally during Phase 1.
-        if self.self_workout_cycle:
-            if not 1 <= count <= 7:
-                frappe.throw("Set Self Workouts Per Week (1–7) before selecting a cycle.")
-            cycle = frappe.db.get_value(
-                "Club100 Self Workout Cycle",
-                self.self_workout_cycle,
-                ["plan", "active"],
-                as_dict=True,
-            )
-            if not cycle or cycle.plan != self.name:
-                frappe.throw("Self Workout Cycle must belong to this Plan.")
-            if not cycle.active:
-                frappe.throw("Selected Self Workout Cycle must be active.")
+        # Cycles are configured for each Program + Plan, not on the Plan.
+        # A Self plan can be saved before program-specific cycles are published.
+        if count and not 1 <= count <= 7:
+            frappe.throw("Self Workouts Per Week must be between 1 and 7.")

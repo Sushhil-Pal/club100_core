@@ -10,6 +10,7 @@ import frappe
 from frappe.utils import cint, getdate, now_datetime
 
 from club100_core.api.member import _get_current_member
+from club100_core.self_workout_cycle import get_active_self_workout_cycle
 
 WEEKDAYS = {name: index for index, name in enumerate((
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
@@ -33,16 +34,14 @@ def _enrollment(member, enrollment_id):
 def _configuration(enrollment):
     plan = frappe.db.get_value(
         "Club100 Plan", enrollment.plan,
-        ["plan_code", "self_workouts_per_week", "self_workout_cycle", "workout_access_after_minutes"],
+        ["plan_code", "self_workouts_per_week", "workout_access_after_minutes"],
         as_dict=True,
     )
     if not plan or plan.plan_code != "self":
         frappe.throw("Enrollment is not a Self plan", frappe.ValidationError)
-    if not 1 <= cint(plan.self_workouts_per_week) <= 7 or not plan.self_workout_cycle:
+    if not 1 <= cint(plan.self_workouts_per_week) <= 7:
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)
-    cycle = frappe.get_doc("Club100 Self Workout Cycle", plan.self_workout_cycle)
-    if not cycle.active or cycle.plan != enrollment.plan or cycle.program != enrollment.program:
-        frappe.throw("Self workout cycle configuration is invalid", frappe.ValidationError)
+    cycle = get_active_self_workout_cycle(enrollment.program, enrollment.plan)
     content_ids = [row.workout_content for row in sorted(cycle.workouts, key=lambda x: cint(x.sequence_no))]
     if not content_ids:
         frappe.throw("Self workout cycle has no workouts", frappe.ValidationError)
@@ -213,12 +212,13 @@ def get_self_workout_schedule_settings(enrollment_id):
     """Return the member-owned weekly schedule without requiring it to exist."""
     enrollment = _enrollment(_get_current_member(), enrollment_id)
     plan = frappe.db.get_value("Club100 Plan", enrollment.plan,
-        ["plan_code", "self_workouts_per_week", "self_workout_cycle"], as_dict=True)
+        ["plan_code", "self_workouts_per_week"], as_dict=True)
     if not plan or plan.plan_code != "self":
         frappe.throw("Enrollment is not a Self plan", frappe.ValidationError)
     count = cint(plan.self_workouts_per_week)
-    if not 1 <= count <= 7 or not plan.self_workout_cycle:
+    if not 1 <= count <= 7:
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)
+    get_active_self_workout_cycle(enrollment.program, enrollment.plan)
     baseline = frappe.get_all("Club100 Self Workout Slot",
         filters={"parent": enrollment.name, "parenttype": "Club100 Enrollment",
                  "parentfield": "self_workout_slots"},
@@ -251,9 +251,10 @@ def set_initial_self_workout_schedule(enrollment_id, slots):
     """Only the owning member may populate an empty enrollment schedule once."""
     enrollment = _enrollment(_get_current_member(), enrollment_id)
     plan = frappe.db.get_value("Club100 Plan", enrollment.plan,
-        ["plan_code", "self_workouts_per_week", "self_workout_cycle"], as_dict=True)
-    if not plan or plan.plan_code != "self" or not plan.self_workout_cycle:
+        ["plan_code", "self_workouts_per_week"], as_dict=True)
+    if not plan or plan.plan_code != "self":
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)
+    get_active_self_workout_cycle(enrollment.program, enrollment.plan)
     count = cint(plan.self_workouts_per_week)
     if not 1 <= count <= 7:
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)

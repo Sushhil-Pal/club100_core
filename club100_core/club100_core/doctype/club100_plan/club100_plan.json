@@ -15,7 +15,6 @@
   "assessment_mode",
   "workout_access_after_minutes",
   "self_workouts_per_week",
-  "self_workout_cycle",
   "short_description",
   "display_order",
   "publish_to_website",
@@ -83,13 +82,6 @@
    "fieldtype": "Int",
    "label": "Self Workouts Per Week",
    "description": "Required number of distinct weekly workout days for Self members."
-  },
-  {
-   "fieldname": "self_workout_cycle",
-   "fieldtype": "Link",
-   "label": "Self Workout Cycle",
-   "options": "Club100 Self Workout Cycle",
-   "description": "Active reusable ordered workout cycle for this Self plan."
   },
   {
    "fieldname": "short_description",
