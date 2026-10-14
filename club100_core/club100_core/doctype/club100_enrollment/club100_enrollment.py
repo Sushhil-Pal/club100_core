@@ -16,6 +16,7 @@ class Club100Enrollment(Document):
         self.set_defaults_from_cohort()
         self.validate_pricing_model()
         self.validate_self_workout_slots()
+        self.protect_active_self_workout_slots()
         self.validate_dates()
         self.validate_sponsorship()
         self.validate_cohort_compatibility()
@@ -212,6 +213,20 @@ class Club100Enrollment(Document):
             # midnight (00:00:00) is valid; don't use truthiness.
             if row.start_time is None or str(row.start_time).strip() == "":
                 frappe.throw(f"Set a start time for {row.weekday}.")
+
+    def protect_active_self_workout_slots(self):
+        """Require revision API for edits to an established active Self schedule."""
+        if self.is_new() or self.status != "Active" or not self.plan:
+            return
+        if frappe.db.get_value("Club100 Plan", self.plan, "plan_code") != "self":
+            return
+        previous = self.get_doc_before_save()
+        if not previous or not previous.get("self_workout_slots"):
+            return  # Initial setup remains possible.
+        def fingerprint(doc):
+            return sorted((str(r.weekday), str(r.start_time)) for r in doc.get("self_workout_slots") or [])
+        if fingerprint(previous) != fingerprint(self):
+            frappe.throw("Active Self workout schedules must be changed through schedule revisions.")
 
     def validate_dates(self):
         if self.start_date and self.end_date:

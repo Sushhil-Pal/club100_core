@@ -4,6 +4,7 @@ Phase 2: schedule is derived from current enrollment slots, starting at enrollme
 start_date; immutable schedule revision history is a subsequent requirement.
 """
 from datetime import datetime, timedelta
+import json
 
 import frappe
 from frappe.utils import cint, getdate, now_datetime
@@ -57,6 +58,25 @@ def _configuration(enrollment):
     return plan, cycle, content_ids, slots
 
 
+def _revisions(enrollment, baseline_slots):
+    """Return dated schedule snapshots, or legacy enrollment slots before first edit."""
+    rows = frappe.get_all(
+        "Club100 Self Schedule Revision",
+        filters={"enrollment": enrollment.name},
+        fields=["name", "effective_from"], order_by="effective_from asc, creation asc",
+    )
+    if not rows:
+        return [(getdate(enrollment.start_date), baseline_slots)]
+    snapshots = []
+    for row in rows:
+        slots = frappe.get_all("Club100 Self Workout Slot",
+            filters={"parent": row.name, "parenttype": "Club100 Self Schedule Revision",
+                     "parentfield": "self_workout_slots"},
+            fields=["weekday", "start_time"], order_by="idx asc")
+        snapshots.append((getdate(row.effective_from), slots))
+    return snapshots
+
+
 def _scheduled(enrollment, slots, start, finish):
     anchor = getdate(enrollment.start_date)
     if not anchor:
@@ -66,23 +86,91 @@ def _scheduled(enrollment, slots, start, finish):
     last = min(finish, cutoff) if cutoff else finish
     if first > last:
         return []
-    slot_by_day = {WEEKDAYS[s.weekday]: s for s in slots}
-    # Stable ordinal derives only from the slots since enrollment's first day.
-    ordinal = sum(1 for day_offset in range((first - anchor).days)
-                  if (anchor + timedelta(days=day_offset)).weekday() in slot_by_day)
+    revisions = _revisions(enrollment, slots)
+    # Count all eligible historical calendar slots, not just requested dates.
+    # This preserves sequence numbers when future slots change.
+    revision_idx = 0
+    ordinal = 0
     result = []
-    for day_offset in range((last - first).days + 1):
-        day = first + timedelta(days=day_offset)
-        slot = slot_by_day.get(day.weekday())
+    for day_offset in range((last - anchor).days + 1):
+        day = anchor + timedelta(days=day_offset)
+        while (revision_idx + 1 < len(revisions)
+               and revisions[revision_idx + 1][0] <= day):
+            revision_idx += 1
+        slot_map = {WEEKDAYS[s.weekday]: s for s in revisions[revision_idx][1]}
+        slot = slot_map.get(day.weekday())
         if slot is None:
             continue
-        raw_time = str(slot.start_time).split(".")[0]
-        if len(raw_time.split(":")) == 2:
-            raw_time += ":00"
-        scheduled_at = datetime.fromisoformat(f"{day.isoformat()}T{raw_time}")
-        result.append((ordinal, scheduled_at))
+        if day >= first:
+            raw_time = str(slot.start_time).split(".")[0]
+            if len(raw_time.split(":")) == 2:
+                raw_time += ":00"
+            raw_time = raw_time.zfill(8)
+            scheduled_at = datetime.fromisoformat(f"{day.isoformat()}T{raw_time}")
+            result.append((ordinal, scheduled_at))
         ordinal += 1
     return result
+
+
+def _parse_slots(slots, expected):
+    if isinstance(slots, str):
+        try:
+            slots = json.loads(slots)
+        except ValueError:
+            frappe.throw("Invalid JSON schedule", frappe.ValidationError)
+    if not isinstance(slots, list) or len(slots) != expected:
+        frappe.throw(f"Select exactly {expected} workout slots", frappe.ValidationError)
+    seen = set()
+    parsed = []
+    for slot in slots:
+        if not isinstance(slot, dict):
+            frappe.throw("Invalid workout slot", frappe.ValidationError)
+        weekday = slot.get("weekday")
+        raw_time = str(slot.get("start_time") or "")
+        if weekday not in WEEKDAYS or weekday in seen:
+            frappe.throw("Workouts must have distinct valid weekdays", frappe.ValidationError)
+        seen.add(weekday)
+        try:
+            time = datetime.strptime(raw_time, "%H:%M:%S").time() if len(raw_time)==8 else datetime.strptime(raw_time, "%H:%M").time()
+        except ValueError:
+            frappe.throw("Invalid workout start time", frappe.ValidationError)
+        parsed.append({"weekday": weekday, "start_time": time.strftime("%H:%M:%S")})
+    return parsed
+
+
+@frappe.whitelist(methods=["POST"])
+def revise_self_workout_schedule(enrollment_id, effective_from, slots):
+    """Append an immutable future schedule snapshot. Past workouts remain unchanged."""
+    enrollment = _enrollment(_get_current_member(), enrollment_id)
+    plan, cycle, ids, baseline = _configuration(enrollment)
+    effective = getdate(effective_from)
+    today = getdate(now_datetime())
+    if effective <= today:
+        frappe.throw("Schedule changes must start on a future date", frappe.ValidationError)
+    if enrollment.end_date and effective > getdate(enrollment.end_date):
+        frappe.throw("Schedule change is after enrollment end date", frappe.ValidationError)
+    parsed = _parse_slots(slots, cint(plan.self_workouts_per_week))
+    # Serialize updates for the same enrollment in concurrent requests.
+    frappe.db.sql("SELECT name FROM `tabClub100 Enrollment` WHERE name=%s FOR UPDATE", enrollment.name)
+    revisions = frappe.get_all("Club100 Self Schedule Revision",
+        filters={"enrollment": enrollment.name},
+        fields=["name", "effective_from"], order_by="effective_from asc")
+    if revisions and effective <= getdate(revisions[-1].effective_from):
+        frappe.throw("New schedule must start after the latest revision", frappe.ValidationError)
+    if not revisions:
+        baseline_doc = frappe.get_doc({
+            "doctype": "Club100 Self Schedule Revision", "enrollment": enrollment.name,
+            "effective_from": enrollment.start_date, "self_workout_slots": [
+                {"weekday": s.weekday, "start_time": str(s.start_time)} for s in baseline],
+            "notes": "Original enrollment schedule snapshot",
+        })
+        baseline_doc.insert(ignore_permissions=True)
+    new_doc = frappe.get_doc({
+        "doctype": "Club100 Self Schedule Revision", "enrollment": enrollment.name,
+        "effective_from": effective, "self_workout_slots": parsed,
+    })
+    new_doc.insert(ignore_permissions=True)
+    return {"revision": new_doc.name, "effectiveFrom": str(effective), "slots": parsed}
 
 
 def _workout_data(content_ids):

@@ -1,0 +1,56 @@
+{
+ "doctype": "DocType",
+ "name": "Club100 Self Schedule Revision",
+ "module": "Club100 Core",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "field_order": [
+  "enrollment",
+  "effective_from",
+  "self_workout_slots",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "enrollment",
+   "fieldtype": "Link",
+   "label": "Enrollment",
+   "options": "Club100 Enrollment",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "self_workout_slots",
+   "fieldtype": "Table",
+   "label": "Weekly Schedule",
+   "options": "Club100 Self Workout Slot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "create": 1,
+   "write": 0,
+   "delete": 0
+  }
+ ],
+ "actions": [],
+ "links": [],
+ "states": [],
+ "sort_field": "effective_from",
+ "sort_order": "DESC"
+}
