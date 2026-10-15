@@ -50,6 +50,8 @@ def current_program():
             "end_date",
             "completion_percentage",
             "status",
+            "pricing_model",
+            "plan",
         ],
         order_by=(
             "start_date desc, "
@@ -62,6 +64,13 @@ def current_program():
         return None
 
     enrollment = enrollments[0]
+
+    pricing_model = enrollment.pricing_model
+    is_society = pricing_model == "Society Batch"
+    plan_code = (
+        frappe.db.get_value("Club100 Plan", enrollment.plan, "plan_code")
+        if enrollment.plan else None
+    )
 
     # ---------------------------------------------------------
     # Program
@@ -265,13 +274,17 @@ def current_program():
         ),
 
         "currentWeek":
-            current_week,
+            None if is_society else current_week,
 
         "totalWeeks":
-            total_weeks,
+            None if is_society else total_weeks,
 
         "completionPercentage":
-            completion_percentage,
+            None if is_society else completion_percentage,
+
+        "pricingModel": pricing_model,
+        "planCode": plan_code,
+        "participationMode": "Ongoing" if is_society else "Finite",
 
         "sessionsCompleted":
             sessions_attended,
