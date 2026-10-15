@@ -11,6 +11,7 @@
   "plan",
   "program",
   "trainer",
+  "workout_format",
   "workout_content",
   "session_date",
   "start_time",
@@ -21,6 +22,8 @@
   "meeting_url",
   "status",
   "attendance_synced",
+  "items_to_bring_override",
+  "additional_instructions",
   "notes",
   "30_min_reminder_sent"
  ],
@@ -124,6 +127,24 @@
    "fieldname": "30_min_reminder_sent",
    "fieldtype": "Check",
    "label": "30 Min Reminder Sent"
+  },
+  {
+   "fieldname": "workout_format",
+   "fieldtype": "Link",
+   "label": "Workout Format",
+   "options": "Club100 Workout Format",
+   "description": "Required for new cohort sessions; legacy sessions may need review"
+  },
+  {
+   "fieldname": "items_to_bring_override",
+   "fieldtype": "Small Text",
+   "label": "Items to Bring Override",
+   "description": "If filled, replaces the format's default checklist (one item per line)"
+  },
+  {
+   "fieldname": "additional_instructions",
+   "fieldtype": "Small Text",
+   "label": "Additional Preparation Instructions"
   }
  ],
  "grid_page_length": 50,

@@ -128,7 +128,7 @@ def upcoming_sessions():
                 "endTime": str(session.end_time),
                 "trainer": trainer_name or "",
                 "level": workout_level or "Beginner",
-                "format": workout_format or "Power",
+                "format": workout_format,
                 "status": "Upcoming"
                 if session.status == "Scheduled"
                 else session.status,
@@ -240,7 +240,7 @@ def session_detail(session_id):
         "format": (
             workout.format
             if workout and workout.format
-            else "Power"
+            else None
         ),
         "status": session.status,
         "deliveryMode": session.delivery_mode,

@@ -1449,6 +1449,7 @@ def schedule():
         "program",
         "trainer",
         "workout_content",
+        "workout_format",
         "session_date",
         "start_time",
         "end_time",
@@ -1850,6 +1851,8 @@ def schedule():
                 if row.trainer
                 else None
             ),
+
+            "workoutFormat": row.workout_format or (workout.format if workout else None),
 
             "workout": (
                 {
@@ -2254,6 +2257,11 @@ def session_detail(session_id):
             "meetingProvider": session.meeting_provider,
             "meetingUrl": meeting_url,
             "notes": session.notes,
+            "preparation": (
+                __import__("club100_core.api.workout_formats", fromlist=["resolve_session_preparation"])
+                .resolve_session_preparation(session)
+                if not is_self_guided else None
+            ),
             "contentAccess": content_access,
 
             "program": {

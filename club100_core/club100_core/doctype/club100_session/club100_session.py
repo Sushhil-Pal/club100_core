@@ -7,6 +7,7 @@ class Club100Session(Document):
     def validate(self):
         self.set_defaults_from_cohort()
         self.validate_target()
+        self.validate_workout_format()
         self.validate_times()
         self.validate_online_details()
 
@@ -88,6 +89,20 @@ class Club100Session(Document):
 
         if not self.meeting_url and cohort.default_meeting_url:
             self.meeting_url = cohort.default_meeting_url
+
+    def validate_workout_format(self):
+        if self.workout_content:
+            content_format = frappe.db.get_value(
+                "Club100 Workout Content", self.workout_content, "format"
+            )
+            if content_format and self.workout_format and content_format != self.workout_format:
+                frappe.throw("Session Workout Format must match its Workout Content format.")
+            if content_format and not self.workout_format:
+                self.workout_format = content_format
+        # Existing records with no linked workout were created before the format
+        # field existed. Permit updating them until a format is configured.
+        if self.cohort and self.is_new() and not self.workout_format:
+            frappe.throw("Workout Format is required for new cohort sessions.")
 
     def validate_times(self):
         if not self.session_date or not self.start_time or not self.end_time:

@@ -1204,6 +1204,11 @@ def session_detail(session_id):
             "notes":
                 session.notes,
 
+            "preparation": __import__("club100_core.api.workout_formats", fromlist=["resolve_session_preparation"]).resolve_session_preparation(session),
+            "workoutFormat": session.workout_format,
+            "itemsToBringOverride": session.items_to_bring_override,
+            "additionalInstructions": session.additional_instructions,
+
             "attendanceSynced":
                 bool(
                     session.attendance_synced
@@ -2216,3 +2221,25 @@ def cancel_session(session_id):
             "status": session.status,
         },
     }
+
+@frappe.whitelist(methods=["POST"])
+def update_session_preparation(session_id, workout_format=None,
+                               items_to_bring_override=None, additional_instructions=None):
+    """Assigned trainer may configure preparation on non-finalized cohort sessions."""
+    trainer = _require_trainer()
+    session = frappe.get_doc("Club100 Session", session_id)
+    if not session.cohort or session.trainer != trainer.name:
+        frappe.throw("You cannot edit this session.", frappe.PermissionError)
+    if session.status not in ("Scheduled", "Live"):
+        frappe.throw("Completed or cancelled sessions cannot be edited.", frappe.ValidationError)
+    if workout_format is not None:
+        if not frappe.db.exists("Club100 Workout Format", workout_format):
+            frappe.throw("Choose an existing Workout Format.", frappe.ValidationError)
+        session.workout_format = workout_format
+    if items_to_bring_override is not None:
+        session.items_to_bring_override = items_to_bring_override.strip() or None
+    if additional_instructions is not None:
+        session.additional_instructions = additional_instructions.strip() or None
+    session.save(ignore_permissions=True)
+    return {"success": True,
+            "preparation": __import__("club100_core.api.workout_formats", fromlist=["resolve_session_preparation"]).resolve_session_preparation(session)}

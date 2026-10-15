@@ -1,0 +1,50 @@
+{
+ "doctype": "DocType",
+ "name": "Club100 Workout Format",
+ "module": "Club100 Core",
+ "autoname": "field:format_name",
+ "title_field": "format_name",
+ "field_order": [
+  "format_name",
+  "description",
+  "default_items_to_bring",
+  "preparation_instructions"
+ ],
+ "fields": [
+  {
+   "fieldname": "format_name",
+   "fieldtype": "Select",
+   "label": "Format Name",
+   "options": "Power\nFlow\nPulse\nPlay",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "default_items_to_bring",
+   "fieldtype": "Small Text",
+   "label": "Default Items to Bring",
+   "description": "One item per line"
+  },
+  {
+   "fieldname": "preparation_instructions",
+   "fieldtype": "Small Text",
+   "label": "Preparation Instructions"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "name",
+ "sort_order": "ASC"
+}
