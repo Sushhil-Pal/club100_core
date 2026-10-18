@@ -259,7 +259,7 @@ SELF_ASSESSMENT_PLAN_MODES = (
 )
 
 
-def _get_self_assessment_membership(member):
+def _get_self_assessment_membership(member, enrollment_id=None):
     if member.status != "Active":
         return None
 
@@ -288,6 +288,11 @@ def _get_self_assessment_membership(member):
             "creation desc"
         ),
     )
+
+    if enrollment_id:
+        from club100_core.api.memberships import resolve_active_enrollment
+        selected = resolve_active_enrollment(member.name, enrollment_id)
+        enrollments = [row for row in enrollments if row.name == selected.name]
 
     for enrollment in enrollments:
         if enrollment.pricing_model != "Online Plan":
@@ -363,7 +368,7 @@ def _get_self_assessment_membership(member):
     return None
 
 
-def _resolve_self_assessment_context(member):
+def _resolve_self_assessment_context(member, enrollment_id=None):
     if member.status != "Active":
         return {
             "allowed": False,
@@ -384,7 +389,7 @@ def _resolve_self_assessment_context(member):
         }
 
     membership = _get_self_assessment_membership(
-        member
+        member, enrollment_id=enrollment_id
     )
 
     if not membership:
@@ -571,12 +576,12 @@ def _public_self_assessment_context(context):
 
 
 @frappe.whitelist(methods=["GET"])
-def assessment_context():
+def assessment_context(enrollment_id=None):
     member = _get_current_member()
 
     return _public_self_assessment_context(
         _resolve_self_assessment_context(
-            member
+            member, enrollment_id=enrollment_id
         )
     )
 
@@ -584,11 +589,12 @@ def assessment_context():
 @frappe.whitelist(methods=["POST"])
 def start_self_assessment(
     safety_acknowledged=0,
+    enrollment_id=None,
 ):
     member = _get_current_member()
 
     context = _resolve_self_assessment_context(
-        member
+        member, enrollment_id=enrollment_id
     )
 
     if not context.get("allowed"):
@@ -647,11 +653,11 @@ def start_self_assessment(
 
 
 @frappe.whitelist(methods=["GET"])
-def self_assessment_detail(assessment_id):
+def self_assessment_detail(assessment_id, enrollment_id=None):
     member = _get_current_member()
 
     context = _resolve_self_assessment_context(
-        member
+        member, enrollment_id=enrollment_id
     )
 
     if not context.get("allowed"):
@@ -682,11 +688,12 @@ def self_assessment_detail(assessment_id):
 def save_self_assessment(
     assessment_id,
     inputs,
+    enrollment_id=None,
 ):
     member = _get_current_member()
 
     context = _resolve_self_assessment_context(
-        member
+        member, enrollment_id=enrollment_id
     )
 
     if not context.get("allowed"):
@@ -726,11 +733,12 @@ def save_self_assessment(
 def complete_self_assessment(
     assessment_id,
     inputs,
+    enrollment_id=None,
 ):
     member = _get_current_member()
 
     context = _resolve_self_assessment_context(
-        member
+        member, enrollment_id=enrollment_id
     )
 
     if not context.get("allowed"):
@@ -761,7 +769,7 @@ def complete_self_assessment(
     result["assessmentContext"] = (
         _public_self_assessment_context(
             _resolve_self_assessment_context(
-                member
+                member, enrollment_id=enrollment_id
             )
         )
     )
@@ -1380,7 +1388,7 @@ def _self_guided_content_access(
 
 
 @frappe.whitelist(methods=["GET"])
-def schedule():
+def schedule(enrollment_id=None):
     member = _get_current_member()
 
     today_date = frappe.utils.getdate(
@@ -1410,6 +1418,11 @@ def schedule():
         ],
         order_by="start_date asc",
     )
+
+    if enrollment_id:
+        from club100_core.api.memberships import resolve_active_enrollment
+        selected = resolve_active_enrollment(member.name, enrollment_id)
+        enrollment_rows = [row for row in enrollment_rows if row.name == selected.name]
 
     if not enrollment_rows:
         return {
@@ -1951,7 +1964,7 @@ def schedule():
 
 
 @frappe.whitelist(methods=["GET"])
-def session_detail(session_id):
+def session_detail(session_id, enrollment_id=None):
     member = _get_current_member()
 
     session_id = (
@@ -2003,6 +2016,11 @@ def session_detail(session_id):
             "This session has no valid member target.",
             frappe.ValidationError,
         )
+
+    if enrollment_id:
+        from club100_core.api.memberships import resolve_active_enrollment
+        selected = resolve_active_enrollment(member.name, enrollment_id)
+        enrollment_filters["name"] = selected.name
 
     enrollment_rows = frappe.get_all(
         "Club100 Enrollment",

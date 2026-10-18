@@ -28,6 +28,11 @@ def _enrollment(member, enrollment_id):
     )
     if not row or not row.plan:
         frappe.throw("Active Self enrollment not found", frappe.PermissionError)
+    today = getdate(now_datetime())
+    if row.start_date and today < getdate(row.start_date):
+        frappe.throw("Self enrollment has not started yet", frappe.PermissionError)
+    if row.end_date and today > getdate(row.end_date):
+        frappe.throw("Self enrollment has expired", frappe.PermissionError)
     return row
 
 

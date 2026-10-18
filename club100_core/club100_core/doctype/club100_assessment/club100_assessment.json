@@ -11,6 +11,7 @@
   "template",
   "template_version",
   "enrollment",
+  "is_free_baseline",
   "program",
   "assessment_type",
   "assessment_mode",
@@ -143,6 +144,14 @@
    "fieldtype": "Table",
    "label": "Inputs",
    "options": "Club100 Assessment Input Result"
+  },
+  {
+   "fieldname": "is_free_baseline",
+   "fieldtype": "Check",
+   "label": "Free Baseline Assessment",
+   "default": "0",
+   "read_only": 1,
+   "description": "Marks the one-time free fitness assessment, independent of paid/trial enrollment."
   }
  ],
  "grid_page_length": 50,

@@ -15,6 +15,10 @@
   "program",
   "plan",
   "self_workout_slots",
+  "is_trial",
+  "trial_status",
+  "trial_activated_on",
+  "converted_enrollment",
   "membership_duration_months",
   "monthly_equivalent",
   "amount_payable",
@@ -43,7 +47,8 @@
   "completion_percentage",
   "notes",
   "baseline_assessment",
-  "latest_assessment"
+  "latest_assessment",
+  "origin_trial_enrollment"
  ],
  "fields": [
   {
@@ -110,7 +115,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Registered\nActive\nCompleted\nCancelled\nOn Hold",
+   "options": "Registered\nScheduled\nActive\nCompleted\nCancelled\nOn Hold",
    "reqd": 1
   },
   {
@@ -277,6 +282,41 @@
    "fieldtype": "Datetime",
    "label": "Pricing Snapshot On",
    "read_only": 1
+  },
+  {
+   "fieldname": "is_trial",
+   "fieldtype": "Check",
+   "label": "Free Self Trial",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trial_status",
+   "fieldtype": "Select",
+   "label": "Trial Status",
+   "options": "\nActive\nExpired\nConverted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trial_activated_on",
+   "fieldtype": "Datetime",
+   "label": "Trial Activated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "converted_enrollment",
+   "fieldtype": "Link",
+   "label": "Converted To Enrollment",
+   "options": "Club100 Enrollment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "origin_trial_enrollment",
+   "fieldtype": "Link",
+   "label": "Original Trial Enrollment",
+   "options": "Club100 Enrollment",
+   "read_only": 1,
+   "description": "Source trial for paid Self conversion"
   }
  ],
  "grid_page_length": 50,

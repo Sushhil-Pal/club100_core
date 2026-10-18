@@ -3,7 +3,7 @@ from frappe.utils import getdate, nowdate
 
 
 @frappe.whitelist()
-def current_program():
+def current_program(enrollment_id=None):
     user = frappe.session.user
 
     if user == "Guest":
@@ -60,10 +60,14 @@ def current_program():
         limit=1,
     )
 
-    if not enrollments:
-        return None
-
-    enrollment = enrollments[0]
+    if enrollment_id:
+        # Do not fall back to an unrelated membership if a specific one was requested.
+        from club100_core.api.memberships import resolve_active_enrollment
+        enrollment = resolve_active_enrollment(member.name, enrollment_id)
+    else:
+        if not enrollments:
+            return None
+        enrollment = enrollments[0]
 
     pricing_model = enrollment.pricing_model
     is_society = pricing_model == "Society Batch"

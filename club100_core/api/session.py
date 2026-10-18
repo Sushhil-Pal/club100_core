@@ -24,7 +24,10 @@ def _get_current_member():
     return member
 
 
-def _get_active_enrollment(member_name):
+def _get_active_enrollment(member_name, enrollment_id=None):
+    if enrollment_id:
+        from club100_core.api.memberships import resolve_active_enrollment
+        return resolve_active_enrollment(member_name, enrollment_id)
     enrollments = frappe.get_all(
         "Club100 Enrollment",
         filters={
@@ -46,11 +49,11 @@ def _get_active_enrollment(member_name):
     return enrollments[0]
 
 @frappe.whitelist()
-def upcoming_sessions():
+def upcoming_sessions(enrollment_id=None):
     member = _get_current_member()
 
     enrollment = _get_active_enrollment(
-        member.name
+        member.name, enrollment_id
     )
 
     if not enrollment:
@@ -150,9 +153,9 @@ def upcoming_sessions():
 
 
 @frappe.whitelist()
-def session_detail(session_id):
+def session_detail(session_id, enrollment_id=None):
     member = _get_current_member()
-    enrollment = _get_active_enrollment(member.name)
+    enrollment = _get_active_enrollment(member.name, enrollment_id)
     if not enrollment:
         frappe.throw(
             "You are not enrolled in this session",

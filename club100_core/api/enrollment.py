@@ -735,11 +735,16 @@ def _finalize_paid_enrollment_doc(
             "Invalid membership duration."
         )
 
-    member = (
-        _ensure_member_for_paid_enrollment(
-            enrollment
-        )
-    )
+    # PWA orders already belong to an authenticated Member. Never infer a
+    # different member from contact details during their payment finalization.
+    if enrollment.website_source == "PWA Commerce":
+        if not enrollment.member:
+            frappe.throw("Authenticated commerce order has no member.")
+        member = frappe.get_doc("Club100 Member", enrollment.member)
+        if member.status != "Active":
+            frappe.throw("The member account is not active.")
+    else:
+        member = _ensure_member_for_paid_enrollment(enrollment)
 
     if enrollment.member:
         if enrollment.member != member.name:
@@ -778,7 +783,13 @@ def _finalize_paid_enrollment_doc(
 
     enrollment.start_date = start_date
     enrollment.end_date = end_date
-    enrollment.status = "Active"
+    # Preserve prepaid future membership dates and do not grant access early.
+    enrollment.status = (
+        "Scheduled"
+        if enrollment.website_source == "PWA Commerce"
+        and getdate(start_date) > getdate(nowdate())
+        else "Active"
+    )
 
     enrollment.save(
         ignore_permissions=True

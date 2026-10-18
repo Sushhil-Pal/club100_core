@@ -184,6 +184,7 @@ def start_assessment(
     enrollment_id=None,
     program_id=None,
     safety_acknowledged_on=None,
+    free_baseline=False,
 ):
     member_id = (
         member_id or ""
@@ -230,6 +231,9 @@ def start_assessment(
         draft_filters["enrollment"] = (
             enrollment_id
         )
+    elif free_baseline:
+        draft_filters["is_free_baseline"] = 1
+        draft_filters["enrollment"] = ["is", "not set"]
 
     existing_draft = frappe.db.get_value(
         "Club100 Assessment",
@@ -283,6 +287,9 @@ def start_assessment(
         completed_filters["enrollment"] = (
             enrollment_id
         )
+    elif free_baseline:
+        completed_filters["is_free_baseline"] = 1
+        completed_filters["enrollment"] = ["is", "not set"]
     elif program_id:
         completed_filters["program"] = (
             program_id
@@ -343,6 +350,9 @@ def start_assessment(
         "status":
             "Draft",
     }
+
+    if free_baseline:
+        payload["is_free_baseline"] = 1
 
     if enrollment_id:
         payload["enrollment"] = (

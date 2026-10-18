@@ -5,6 +5,7 @@ from frappe.utils import cint, getdate
 
 SEAT_OCCUPYING_STATUSES = (
     "Registered",
+    "Scheduled",
     "Active",
     "On Hold",
 )
@@ -381,21 +382,31 @@ class Club100Enrollment(Document):
         if not self.member or not self.program:
             return
 
-        existing = frappe.db.exists(
+        rows = frappe.get_all(
             "Club100 Enrollment",
-            {
+            filters={
                 "member": self.member,
                 "program": self.program,
-                "status": [
-                    "in",
-                    list(SEAT_OCCUPYING_STATUSES),
-                ],
+                "status": ["in", list(SEAT_OCCUPYING_STATUSES)],
                 "name": ["!=", self.name],
             },
+            fields=["name", "pricing_model", "plan", "start_date", "end_date"],
         )
-
-        if existing:
+        # Different modalities may coexist (e.g. Society + Self trial).
+        # The same modality and program cannot have overlapping validity.
+        for row in rows:
+            same_modality = row.pricing_model == self.pricing_model
+            if same_modality and self.pricing_model == "Online Plan":
+                same_modality = row.plan == self.plan
+            if not same_modality:
+                continue
+            if (self.start_date and row.end_date and
+                    getdate(self.start_date) > getdate(row.end_date)):
+                continue
+            if (row.start_date and self.end_date and
+                    getdate(row.start_date) > getdate(self.end_date)):
+                continue
             frappe.throw(
-                "This member already has an active enrollment "
-                "for this program."
+                "This member already has an overlapping enrollment "
+                "for the same program and training plan."
             )
