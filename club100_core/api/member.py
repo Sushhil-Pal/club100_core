@@ -177,12 +177,6 @@ def complete_onboarding(
             frappe.ValidationError,
         )
 
-    if not preferred_delivery_mode:
-        frappe.throw(
-            "Preferred delivery mode is required",
-            frappe.ValidationError,
-        )
-
     # -----------------------------------------------------
     # Update onboarding fields
     # -----------------------------------------------------
@@ -198,9 +192,10 @@ def complete_onboarding(
         current_fitness_level
     )
 
-    member.preferred_delivery_mode = (
-        preferred_delivery_mode
-    )
+    # Legacy optional member preference: do not overwrite it when onboarding
+    # omits this value. Actual delivery mode belongs to the enrollment/plan.
+    if preferred_delivery_mode:
+        member.preferred_delivery_mode = preferred_delivery_mode
 
     member.medical_notes = (
         medical_notes or ""
