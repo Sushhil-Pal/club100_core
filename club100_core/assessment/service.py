@@ -218,22 +218,13 @@ def start_assessment(
         program_id=program_id,
     )
 
-    # Resume only a draft belonging to the same assessment mode.
-    # If an enrollment is supplied, also scope the draft to that
-    # membership so a draft from a previous membership is not reused.
-    draft_filters = {
-        "member": member_id,
-        "status": "Draft",
-        "assessment_mode": assessment_mode,
-    }
-
-    if enrollment_id:
-        draft_filters["enrollment"] = (
-            enrollment_id
-        )
-    elif free_baseline:
-        draft_filters["is_free_baseline"] = 1
-        draft_filters["enrollment"] = ["is", "not set"]
+    # One member-wide draft, regardless of mode, membership, or entry point.
+    # Serialize simultaneous new starts for the same member.
+    frappe.db.sql(
+        "SELECT name FROM `tabClub100 Member` WHERE name=%s FOR UPDATE",
+        (member_id,),
+    )
+    draft_filters = {"member": member_id, "status": "Draft"}
 
     existing_draft = frappe.db.get_value(
         "Club100 Assessment",
@@ -261,8 +252,9 @@ def start_assessment(
                     "Draft",
                 "assessmentType":
                     existing_draft.assessment_type,
-                "assessmentMode":
-                    assessment_mode,
+                "assessmentMode": frappe.db.get_value(
+                    "Club100 Assessment", existing_draft.name, "assessment_mode"
+                ),
                 "assessmentDate":
                     existing_draft.assessment_date,
                 "template":
@@ -283,17 +275,6 @@ def start_assessment(
         "status": "Completed",
     }
 
-    if enrollment_id:
-        completed_filters["enrollment"] = (
-            enrollment_id
-        )
-    elif free_baseline:
-        completed_filters["is_free_baseline"] = 1
-        completed_filters["enrollment"] = ["is", "not set"]
-    elif program_id:
-        completed_filters["program"] = (
-            program_id
-        )
 
     completed_count = frappe.db.count(
         "Club100 Assessment",
@@ -306,17 +287,14 @@ def start_assessment(
         else "Baseline"
     )
 
+    # Unified assessment methodology: all NEW assessments use the Standard
+    # template regardless of who administers them. Keep assessment_mode as
+    # delivery metadata; existing drafts never reach this selection branch.
+    # Ignore legacy template_code passed by older member clients.
     template_filters = {
         "active": 1,
-        "assessment_mode": assessment_mode,
+        "template_code": "STANDARD",
     }
-
-    if template_code:
-        template_filters["template_code"] = (
-            template_code
-        )
-    else:
-        template_filters["is_default"] = 1
 
     template = frappe.db.get_value(
         "Club100 Assessment Template",
@@ -507,6 +485,7 @@ def assessment_detail(
                 doc.assessment_mode,
             "assessmentDate":
                 doc.assessment_date,
+            "modified": str(doc.modified),
             "deliveryMode":
                 doc.delivery_mode,
             "status":
@@ -533,6 +512,7 @@ def save_assessment(
     expected_member_id=None,
     expected_enrollment_id=None,
     expected_current_status=None,
+    expected_modified=None,
 ):
     status = (
         status or "Draft"
@@ -552,6 +532,12 @@ def save_assessment(
 
     inputs = inputs or []
 
+    # Serialize writes and compare the version supplied by the client.
+    # This prevents member/trainer lost updates across separate requests.
+    frappe.db.sql(
+        "SELECT name FROM `tabClub100 Assessment` WHERE name=%s FOR UPDATE",
+        (assessment_id,),
+    )
     doc = _get_assessment(
         assessment_id=assessment_id,
         expected_assessment_mode=(
@@ -567,6 +553,12 @@ def save_assessment(
             expected_current_status
         ),
     )
+
+    if not expected_modified or str(doc.modified) != str(expected_modified):
+        frappe.throw(
+            "This assessment was updated elsewhere. Reload it before saving your changes.",
+            frappe.ValidationError,
+        )
 
     rows_by_name = {
         row.name: row
@@ -648,6 +640,7 @@ def save_assessment(
         "success": True,
         "assessment": {
             "id": doc.name,
+            "modified": str(doc.modified),
             "status": doc.status,
             "assessmentType":
                 doc.assessment_type,

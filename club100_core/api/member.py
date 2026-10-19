@@ -290,49 +290,34 @@ def _get_self_assessment_membership(member, enrollment_id=None):
         enrollments = [row for row in enrollments if row.name == selected.name]
 
     for enrollment in enrollments:
-        if enrollment.pricing_model != "Online Plan":
-            continue
-
-        if not enrollment.plan:
-            continue
-
+        # Active, date-valid membership is already owner-checked above.
+        # Assessment eligibility is program-based, not delivery-mode-based.
         if (
             enrollment.start_date
-            and frappe.utils.getdate(
-                enrollment.start_date
-            ) > today
+            and frappe.utils.getdate(enrollment.start_date) > today
         ):
             continue
-
         if (
             enrollment.end_date
-            and frappe.utils.getdate(
-                enrollment.end_date
-            ) < today
+            and frappe.utils.getdate(enrollment.end_date) < today
         ):
             continue
 
-        plan = frappe.db.get_value(
-            "Club100 Plan",
-            enrollment.plan,
-            [
-                "name",
-                "plan_name",
-                "plan_code",
-                "delivery_type",
-                "assessment_mode",
-            ],
-            as_dict=True,
+        plan = (
+            frappe.db.get_value(
+                "Club100 Plan",
+                enrollment.plan,
+                ["name", "plan_name", "plan_code", "delivery_type", "assessment_mode"],
+                as_dict=True,
+            )
+            if enrollment.plan else None
         )
-
+        # Society/corporate membership can be cohort-based without a Plan.
         if not plan:
-            continue
-
-        if (
-            plan.assessment_mode
-            not in SELF_ASSESSMENT_PLAN_MODES
-        ):
-            continue
+            plan = frappe._dict({
+                "name": "", "plan_name": "Membership", "plan_code": "",
+                "delivery_type": "Onsite", "assessment_mode": "Both",
+            })
 
         program = frappe.db.get_value(
             "Club100 Program",
@@ -365,10 +350,7 @@ def _get_self_assessment_membership(member, enrollment_id=None):
 
 def _resolve_self_assessment_context(member, enrollment_id=None):
     if member.status != "Active":
-        return {
-            "allowed": False,
-            "reason": "Your Club100 membership is not active.",
-        }
+        return {"allowed": False, "reason": "Your Club100 account is not active."}
 
     if (
         member.onboarding_status != "Completed"
@@ -387,30 +369,21 @@ def _resolve_self_assessment_context(member, enrollment_id=None):
         member, enrollment_id=enrollment_id
     )
 
-    if not membership:
-        return {
-            "allowed": False,
-            "reason": (
-                "Self Assessment is not available for your current membership."
-            ),
-        }
-
-    enrollment = membership["enrollment"]
-    plan = membership["plan"]
-    program = membership["program"]
+    enrollment = membership["enrollment"] if membership else None
+    plan = membership["plan"] if membership else None
+    program = membership["program"] if membership else None
 
     draft = frappe.db.get_value(
         "Club100 Assessment",
         {
             "member": member.name,
-            "enrollment": enrollment.name,
-            "assessment_mode": "Self Assessment",
             "status": "Draft",
         },
         [
             "name",
             "assessment_type",
             "assessment_date",
+            "assessment_mode",
             "safety_acknowledged_on",
         ],
         order_by="modified desc",
@@ -421,7 +394,6 @@ def _resolve_self_assessment_context(member, enrollment_id=None):
         "Club100 Assessment",
         {
             "member": member.name,
-            "enrollment": enrollment.name,
             "status": "Completed",
         },
         [
@@ -439,18 +411,14 @@ def _resolve_self_assessment_context(member, enrollment_id=None):
         as_dict=True,
     )
 
-    interval_months = int(
-        program.reassessment_interval_months
-        or 0
-    )
+    # Retain program cadence when present; otherwise allow a member-wide
+    # reassessment following an existing completed assessment.
+    interval_months = int(program.reassessment_interval_months or 0) if program else 0
 
     next_due_on = None
     due = False
 
-    if (
-        latest
-        and program.reassessment_included
-    ):
+    if latest:
         if interval_months > 0:
             next_due_on = frappe.utils.getdate(
                 frappe.utils.add_months(
@@ -478,10 +446,6 @@ def _resolve_self_assessment_context(member, enrollment_id=None):
         state = "Not Started"
         can_start = True
         assessment_type = "Baseline"
-    elif not program.reassessment_included:
-        state = "Current"
-        can_start = False
-        assessment_type = "Reassessment"
     elif due:
         state = "Due"
         can_start = True
@@ -493,7 +457,7 @@ def _resolve_self_assessment_context(member, enrollment_id=None):
 
     return {
         "allowed": True,
-        "assessmentMode": "Self Assessment",
+        "assessmentMode": draft.assessment_mode if draft else "Self Assessment",
         "state": state,
         "canStart": can_start,
         "assessmentType": assessment_type,
@@ -525,36 +489,23 @@ def _resolve_self_assessment_context(member, enrollment_id=None):
         "reassessmentIntervalMonths": (
             interval_months
         ),
-        "enrollment": {
-            "id": enrollment.name,
-            "status": "Active",
-            "startDate": enrollment.start_date,
-            "endDate": enrollment.end_date,
-            "durationMonths": (
-                enrollment.membership_duration_months
-            ),
-            "pricingModel": (
-                enrollment.pricing_model
-            ),
-        },
-        "program": {
-            "id": program.name,
-            "code": program.program_code,
+        "enrollment": ({
+            "id": enrollment.name, "status": "Active",
+            "startDate": enrollment.start_date, "endDate": enrollment.end_date,
+            "durationMonths": enrollment.membership_duration_months,
+            "pricingModel": enrollment.pricing_model,
+        } if enrollment else None),
+        "program": ({
+            "id": program.name, "code": program.program_code,
             "name": program.program_name,
-            "assessmentIncluded": bool(
-                program.assessment_included
-            ),
-            "reassessmentIncluded": bool(
-                program.reassessment_included
-            ),
-        },
-        "plan": {
-            "id": plan.name,
-            "code": plan.plan_code,
-            "name": plan.plan_name,
-            "deliveryType": plan.delivery_type,
+            "assessmentIncluded": bool(program.assessment_included),
+            "reassessmentIncluded": bool(program.reassessment_included),
+        } if program else None),
+        "plan": ({
+            "id": plan.name, "code": plan.plan_code,
+            "name": plan.plan_name, "deliveryType": plan.delivery_type,
             "assessmentMode": plan.assessment_mode,
-        },
+        } if plan else None),
         "_membership": membership,
     }
 
@@ -600,8 +551,8 @@ def start_self_assessment(
         )
 
     membership = context["_membership"]
-    enrollment = membership["enrollment"]
-    program = membership["program"]
+    enrollment = membership["enrollment"] if membership else None
+    program = membership["program"] if membership else None
 
     if not context.get("draftAssessmentId"):
         if not context.get("canStart"):
@@ -625,16 +576,25 @@ def start_self_assessment(
                 frappe.ValidationError,
             )
 
+    # Preserve the trainer's template and assessor for an enrollment-linked draft.
+    if context.get("draftAssessmentId"):
+        existing = assessment_service.assessment_detail(
+            assessment_id=context["draftAssessmentId"],
+            expected_member_id=member.name,
+            expected_status="Draft",
+        )["assessment"]
+        return {"assessment": existing, "resumed": True}
+
     result = assessment_service.start_assessment(
         member_id=member.name,
         assessor=None,
         delivery_mode="Online",
         assessment_mode="Self Assessment",
-        template_code=(
-            SELF_ASSESSMENT_TEMPLATE_CODE
-        ),
-        enrollment_id=enrollment.name,
-        program_id=program.name,
+        # The shared service selects the Standard template for all new
+        # assessments. Mode remains Self Assessment for reporting.
+        # Optional context only; a new assessment belongs to the member.
+        enrollment_id=None,
+        program_id=None,
         safety_acknowledged_on=(
             frappe.utils.now_datetime()
             if not context.get(
@@ -662,19 +622,9 @@ def self_assessment_detail(assessment_id, enrollment_id=None):
             frappe.ValidationError,
         )
 
-    enrollment = context[
-        "_membership"
-    ]["enrollment"]
-
     return assessment_service.assessment_detail(
         assessment_id=assessment_id,
-        expected_assessment_mode=(
-            "Self Assessment"
-        ),
         expected_member_id=member.name,
-        expected_enrollment_id=(
-            enrollment.name
-        ),
         expected_status="Draft",
     )
 
@@ -684,6 +634,7 @@ def save_self_assessment(
     assessment_id,
     inputs,
     enrollment_id=None,
+    expected_modified=None,
 ):
     member = _get_current_member()
 
@@ -698,22 +649,13 @@ def save_self_assessment(
             frappe.ValidationError,
         )
 
-    enrollment = context[
-        "_membership"
-    ]["enrollment"]
-
     result = assessment_service.save_assessment(
         assessment_id=assessment_id,
         inputs=inputs,
         status="Draft",
-        expected_assessment_mode=(
-            "Self Assessment"
-        ),
         expected_member_id=member.name,
-        expected_enrollment_id=(
-            enrollment.name
-        ),
         expected_current_status="Draft",
+        expected_modified=expected_modified,
     )
 
     # Draft assessments may have an internally calculated partial score.
@@ -729,6 +671,7 @@ def complete_self_assessment(
     assessment_id,
     inputs,
     enrollment_id=None,
+    expected_modified=None,
 ):
     member = _get_current_member()
 
@@ -743,22 +686,13 @@ def complete_self_assessment(
             frappe.ValidationError,
         )
 
-    enrollment = context[
-        "_membership"
-    ]["enrollment"]
-
     result = assessment_service.save_assessment(
         assessment_id=assessment_id,
         inputs=inputs,
         status="Completed",
-        expected_assessment_mode=(
-            "Self Assessment"
-        ),
         expected_member_id=member.name,
-        expected_enrollment_id=(
-            enrollment.name
-        ),
         expected_current_status="Draft",
+        expected_modified=expected_modified,
     )
 
     result["assessmentContext"] = (

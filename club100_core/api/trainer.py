@@ -296,11 +296,26 @@ def start_assessment(
 ):
     trainer = _require_trainer()
 
+    # New trainer-led drafts are membership-linked when unambiguous, so
+    # members can resume them on their own phone. Existing unlinked drafts
+    # remain untouched and must be assigned explicitly if ambiguous.
+    from club100_core.api.memberships import _active_memberships
+    active = _active_memberships(member_id)
+    eligible = [
+        row for row in active
+        if row.program and frappe.db.get_value(
+            "Club100 Program", row.program, "assessment_included"
+        )
+    ]
+    selected = eligible[0] if len(eligible) == 1 else None
+
     return assessment_service.start_assessment(
         member_id=member_id,
         assessor=trainer.name,
         delivery_mode=delivery_mode,
         assessment_mode="Trainer Led",
+        enrollment_id=selected.name if selected else None,
+        program_id=selected.program if selected else None,
     )
 
 
@@ -310,7 +325,6 @@ def assessment_detail(assessment_id):
 
     return assessment_service.assessment_detail(
         assessment_id=assessment_id,
-        expected_assessment_mode="Trainer Led",
     )
 
 
@@ -319,6 +333,7 @@ def save_assessment(
     assessment_id,
     inputs,
     status="Draft",
+    expected_modified=None,
 ):
     _require_trainer()
 
@@ -326,7 +341,7 @@ def save_assessment(
         assessment_id=assessment_id,
         inputs=inputs,
         status=status,
-        expected_assessment_mode="Trainer Led",
+        expected_modified=expected_modified,
     )
 
 
