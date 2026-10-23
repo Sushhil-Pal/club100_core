@@ -1,99 +1,109 @@
 {
-  "doctype": "DocType",
-  "name": "Club100 Training Level Change",
-  "module": "Club100 Core",
-  "custom": 0,
-  "istable": 0,
-  "engine": "InnoDB",
-  "autoname": "hash",
-  "field_order": [
-    "member",
-    "journey",
-    "previous_level",
-    "new_level",
-    "previous_program",
-    "new_program",
-    "changed_by_user",
-    "change_source",
-    "reason",
-    "effective_on"
-  ],
-  "fields": [
-    {
-      "fieldname": "member",
-      "label": "Member",
-      "fieldtype": "Link",
-      "options": "Club100 Member",
-      "reqd": 1
-    },
-    {
-      "fieldname": "journey",
-      "label": "Journey",
-      "fieldtype": "Link",
-      "options": "Club100 Member Training Journey",
-      "reqd": 1
-    },
-    {
-      "fieldname": "previous_level",
-      "label": "Previous Level",
-      "fieldtype": "Select",
-      "options": "L1\nL2\nL3"
-    },
-    {
-      "fieldname": "new_level",
-      "label": "New Level",
-      "fieldtype": "Select",
-      "options": "L1\nL2\nL3",
-      "reqd": 1
-    },
-    {
-      "fieldname": "previous_program",
-      "label": "Previous Program",
-      "fieldtype": "Link",
-      "options": "Club100 Program"
-    },
-    {
-      "fieldname": "new_program",
-      "label": "New Program",
-      "fieldtype": "Link",
-      "options": "Club100 Program"
-    },
-    {
-      "fieldname": "changed_by_user",
-      "label": "Changed By User",
-      "fieldtype": "Link",
-      "options": "User",
-      "reqd": 1
-    },
-    {
-      "fieldname": "change_source",
-      "label": "Change Source",
-      "fieldtype": "Select",
-      "options": "Member\nTrainer\nAdministrator",
-      "reqd": 1
-    },
-    {
-      "fieldname": "reason",
-      "label": "Reason",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "effective_on",
-      "label": "Effective On",
-      "fieldtype": "Datetime",
-      "reqd": 1
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 0,
-      "report": 1
-    }
-  ],
-  "sort_field": "modified",
-  "sort_order": "DESC"
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-22 12:37:58.606432",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "member",
+  "journey",
+  "previous_level",
+  "new_level",
+  "previous_program",
+  "new_program",
+  "changed_by_user",
+  "change_source",
+  "reason",
+  "effective_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Member",
+   "options": "Club100 Member",
+   "reqd": 1
+  },
+  {
+   "fieldname": "journey",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Journey",
+   "options": "Club100 Member Training Journey",
+   "reqd": 1
+  },
+  {
+   "fieldname": "previous_level",
+   "fieldtype": "Select",
+   "label": "Previous Level",
+   "options": "L1\nL2\nL3"
+  },
+  {
+   "fieldname": "new_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "New Level",
+   "options": "L1\nL2\nL3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "previous_program",
+   "fieldtype": "Link",
+   "label": "Previous Program",
+   "options": "Club100 Program"
+  },
+  {
+   "fieldname": "new_program",
+   "fieldtype": "Link",
+   "label": "New Program",
+   "options": "Club100 Program"
+  },
+  {
+   "fieldname": "changed_by_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Changed By User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "change_source",
+   "fieldtype": "Select",
+   "label": "Change Source",
+   "options": "Member\nTrainer\nAdministrator",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "effective_on",
+   "fieldtype": "Datetime",
+   "label": "Effective On",
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-23 16:38:11.738097",
+ "modified_by": "Administrator",
+ "module": "Club100 Core",
+ "name": "Club100 Training Level Change",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
 }
