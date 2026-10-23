@@ -1,0 +1,110 @@
+{
+  "doctype": "DocType",
+  "name": "Club100 Program Curriculum",
+  "module": "Club100 Core",
+  "custom": 0,
+  "istable": 0,
+  "engine": "InnoDB",
+  "field_order": [
+    "curriculum_code",
+    "program",
+    "track",
+    "level_code",
+    "level_name",
+    "weeks_per_cycle",
+    "sessions_per_week",
+    "active",
+    "repeat_cycle",
+    "sessions",
+    "source_reference",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "curriculum_code",
+      "label": "Curriculum Code",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "program",
+      "label": "Program",
+      "fieldtype": "Link",
+      "reqd": 1,
+      "options": "Club100 Program"
+    },
+    {
+      "fieldname": "track",
+      "label": "Track",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Standard\nSociety"
+    },
+    {
+      "fieldname": "level_code",
+      "label": "Level Code",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "L1\nL2\nL3\nMIXED"
+    },
+    {
+      "fieldname": "level_name",
+      "label": "Level Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "weeks_per_cycle",
+      "label": "Weeks Per Cycle",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "sessions_per_week",
+      "label": "Sessions Per Week",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "active",
+      "label": "Active",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "repeat_cycle",
+      "label": "Repeat Cycle",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "sessions",
+      "label": "Sessions",
+      "fieldtype": "Table",
+      "options": "Club100 Curriculum Session"
+    },
+    {
+      "fieldname": "source_reference",
+      "label": "Source Reference",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "autoname": "field:curriculum_code",
+  "title_field": "curriculum_code"
+}

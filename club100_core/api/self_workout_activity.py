@@ -3,6 +3,7 @@
 Scheduled workouts remain virtual. Only actual starts create documents.
 """
 import frappe
+import json
 from frappe.utils import now_datetime
 
 from club100_core.api.member import _get_current_member
@@ -49,6 +50,8 @@ def start_self_workout(workout_id):
         "enrollment": enrollment.name,
         "workout_id": workout["id"],
         "workout_content": workout["workoutContent"],
+        "curriculum": (workout.get("curriculumWorkout") or {}).get("curriculum"),
+        "curriculum_snapshot": json.dumps(workout["curriculumWorkout"], default=str) if workout.get("curriculumWorkout") else None,
         "scheduled_at": workout["availableFrom"].replace("T", " "),
         "started_at": now_datetime(),
         "status": "Started",

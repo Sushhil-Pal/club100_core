@@ -1,0 +1,38 @@
+{
+ "doctype": "DocType",
+ "name": "Club100 Society Weekly Slot",
+ "module": "Club100 Core",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "weekday",
+  "start_time",
+  "duration_minutes"
+ ],
+ "fields": [
+  {
+   "fieldname": "weekday",
+   "fieldtype": "Select",
+   "label": "Weekday",
+   "options": "Monday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Start Time",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "duration_minutes",
+   "fieldtype": "Int",
+   "label": "Duration (minutes)",
+   "reqd": 1,
+   "default": "55",
+   "in_list_view": 1
+  }
+ ],
+ "permissions": []
+}

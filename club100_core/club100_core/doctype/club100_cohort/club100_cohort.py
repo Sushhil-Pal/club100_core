@@ -16,6 +16,7 @@ class Club100Cohort(Document):
         self.validate_capacity()
         self.validate_private_cohort()
         self.validate_meeting_url()
+        self.validate_society_weekly_schedule()
 
     def set_defaults_from_program(self):
         if not self.program:
@@ -245,3 +246,28 @@ class Club100Cohort(Document):
                 "Meeting URL has not been configured for this "
                 "online cohort."
             )
+
+    def validate_society_weekly_schedule(self):
+        if not cint(self.society_schedule_enabled):
+            return
+        if not self.society or self.delivery_mode != 'Onsite':
+            frappe.throw('Automatic Society schedule requires an onsite Society cohort.')
+        if not self.society_curriculum_start_date:
+            frappe.throw('Set Society Curriculum Start Date before enabling weekly schedule.')
+        if self.status not in ('Planned', 'Open', 'Active'):
+            frappe.throw('Automatic Society schedule requires Planned, Open or Active cohort.')
+        rows = self.society_weekly_schedule or []
+        if len(rows) != 4:
+            frappe.throw('Configure exactly four weekly Society sessions.')
+        days = [row.weekday for row in rows]
+        if len(set(days)) != 4:
+            frappe.throw('Society weekly session weekdays must be distinct.')
+        for row in rows:
+            if not row.start_time or not 15 <= cint(row.duration_minutes) <= 180:
+                frappe.throw('Each Society slot requires a time and duration between 15 and 180 minutes.')
+        old = self.get_doc_before_save() if not self.is_new() else None
+        if old and cint(old.society_schedule_enabled) and (
+            [(x.weekday,str(x.start_time),cint(x.duration_minutes)) for x in (old.society_weekly_schedule or [])] !=
+            [(x.weekday,str(x.start_time),cint(x.duration_minutes)) for x in rows]
+        ):
+            frappe.msgprint('Future existing Society sessions will be preserved. New schedule applies to uncreated dates only.')

@@ -1,0 +1,134 @@
+{
+  "doctype": "DocType",
+  "name": "Club100 Curriculum Session",
+  "module": "Club100 Core",
+  "custom": 0,
+  "istable": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "week_number",
+    "session_number",
+    "training_block",
+    "workout_format",
+    "format_session_number",
+    "session_title",
+    "objective",
+    "warm_up",
+    "main_block_a",
+    "main_block_b",
+    "finisher_skill",
+    "cooldown",
+    "intensity",
+    "equipment",
+    "duration",
+    "core_variation",
+    "strong_variation",
+    "performance_variation",
+    "trainer_cues"
+  ],
+  "fields": [
+    {
+      "fieldname": "week_number",
+      "label": "Week Number",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "session_number",
+      "label": "Session Number",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "training_block",
+      "label": "Training Block",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "workout_format",
+      "label": "Workout Format",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Power\nFlow\nPulse\nPlay"
+    },
+    {
+      "fieldname": "format_session_number",
+      "label": "Format Session Number",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "session_title",
+      "label": "Session Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "objective",
+      "label": "Objective",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "warm_up",
+      "label": "Warm Up",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "main_block_a",
+      "label": "Main Block A",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "main_block_b",
+      "label": "Main Block B",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "finisher_skill",
+      "label": "Finisher Skill",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "cooldown",
+      "label": "Cooldown",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "intensity",
+      "label": "Intensity",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "equipment",
+      "label": "Equipment",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "duration",
+      "label": "Duration",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "core_variation",
+      "label": "Core Variation",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "strong_variation",
+      "label": "Strong Variation",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "performance_variation",
+      "label": "Performance Variation",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "trainer_cues",
+      "label": "Trainer Cues / Mixed-Level Safety",
+      "fieldtype": "Text"
+    }
+  ],
+  "permissions": [],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

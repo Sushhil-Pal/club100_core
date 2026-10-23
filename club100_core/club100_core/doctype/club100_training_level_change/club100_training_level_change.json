@@ -1,0 +1,99 @@
+{
+  "doctype": "DocType",
+  "name": "Club100 Training Level Change",
+  "module": "Club100 Core",
+  "custom": 0,
+  "istable": 0,
+  "engine": "InnoDB",
+  "autoname": "hash",
+  "field_order": [
+    "member",
+    "journey",
+    "previous_level",
+    "new_level",
+    "previous_program",
+    "new_program",
+    "changed_by_user",
+    "change_source",
+    "reason",
+    "effective_on"
+  ],
+  "fields": [
+    {
+      "fieldname": "member",
+      "label": "Member",
+      "fieldtype": "Link",
+      "options": "Club100 Member",
+      "reqd": 1
+    },
+    {
+      "fieldname": "journey",
+      "label": "Journey",
+      "fieldtype": "Link",
+      "options": "Club100 Member Training Journey",
+      "reqd": 1
+    },
+    {
+      "fieldname": "previous_level",
+      "label": "Previous Level",
+      "fieldtype": "Select",
+      "options": "L1\nL2\nL3"
+    },
+    {
+      "fieldname": "new_level",
+      "label": "New Level",
+      "fieldtype": "Select",
+      "options": "L1\nL2\nL3",
+      "reqd": 1
+    },
+    {
+      "fieldname": "previous_program",
+      "label": "Previous Program",
+      "fieldtype": "Link",
+      "options": "Club100 Program"
+    },
+    {
+      "fieldname": "new_program",
+      "label": "New Program",
+      "fieldtype": "Link",
+      "options": "Club100 Program"
+    },
+    {
+      "fieldname": "changed_by_user",
+      "label": "Changed By User",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "change_source",
+      "label": "Change Source",
+      "fieldtype": "Select",
+      "options": "Member\nTrainer\nAdministrator",
+      "reqd": 1
+    },
+    {
+      "fieldname": "reason",
+      "label": "Reason",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "effective_on",
+      "label": "Effective On",
+      "fieldtype": "Datetime",
+      "reqd": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

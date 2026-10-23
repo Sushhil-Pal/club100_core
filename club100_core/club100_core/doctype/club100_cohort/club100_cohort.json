@@ -21,6 +21,9 @@
   "pricing_tier",
   "monthly_price_per_member",
   "pricing_last_calculated_on",
+  "society_curriculum_start_date",
+  "society_schedule_enabled",
+  "society_weekly_schedule",
   "start_date",
   "primary_trainer",
   "end_date",
@@ -173,6 +176,26 @@
    "label": "Primary Trainer",
    "options": "Club100 Trainer",
    "reqd": 1
+  },
+  {
+   "fieldname": "society_curriculum_start_date",
+   "fieldtype": "Date",
+   "label": "Society Curriculum Start Date",
+   "description": "Optional cutover date: sessions before this date remain legacy. Set before creating curriculum-driven sessions."
+  },
+  {
+   "fieldname": "society_schedule_enabled",
+   "fieldtype": "Check",
+   "label": "Automatic Society Weekly Schedule",
+   "default": "0",
+   "description": "Enable after setting four weekly slots and Society Curriculum Start Date. Generates rolling 28 days."
+  },
+  {
+   "fieldname": "society_weekly_schedule",
+   "fieldtype": "Table",
+   "options": "Club100 Society Weekly Slot",
+   "label": "Society Weekly Schedule",
+   "description": "Exactly four distinct weekdays; per-day start time and duration. One-time ERP setup."
   }
  ],
  "grid_page_length": 50,

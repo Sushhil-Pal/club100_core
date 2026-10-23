@@ -11,8 +11,8 @@ from club100_core.api.self_workouts import (
     _build,
     _configuration,
     _scheduled,
-    _workout_data,
 )
+from club100_core.curriculum.self_schedule import self_curriculum_context
 
 REMINDER_MINUTES = 30
 
@@ -105,7 +105,10 @@ def process_self_workout_reminders():
         try:
             plan, cycle, ids, slots = _configuration(enrollment)
             times = _scheduled(enrollment, slots, getdate(now), getdate(window_end))
-            content = _workout_data(ids)
+            curriculum_context = self_curriculum_context(enrollment)
+            if not curriculum_context:
+                skipped_incomplete += 1
+                continue
         except (frappe.ValidationError, frappe.DoesNotExistError):
             # A newly activated Self enrollment may not have its weekly slots yet.
             skipped_incomplete += 1
@@ -113,7 +116,11 @@ def process_self_workout_reminders():
         for ordinal, scheduled_at in times:
             if not now < scheduled_at <= window_end:
                 continue
-            workout = _build(enrollment, plan, cycle, ids, content, ordinal, scheduled_at, now)
+            workout = _build(
+                enrollment, plan, cycle, ids, None,
+                ordinal, scheduled_at, now,
+                curriculum_context=curriculum_context,
+            )
             if not workout:
                 continue
             candidates += 1

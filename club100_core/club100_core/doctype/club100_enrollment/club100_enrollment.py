@@ -12,6 +12,22 @@ SEAT_OCCUPYING_STATUSES = (
 
 
 class Club100Enrollment(Document):
+    def after_insert(self):
+        self._ensure_active_self_journey()
+
+    def on_update(self):
+        self._ensure_active_self_journey()
+
+    def _ensure_active_self_journey(self):
+        """Initialize once on activation. A renewed enrollment never resets the journey."""
+        if (self.status != "Active" or self.pricing_model != "Online Plan"
+                or not self.member or not self.program or not self.plan):
+            return
+        if frappe.db.get_value("Club100 Plan", self.plan, "plan_code") != "self":
+            return
+        from club100_core.curriculum.journey import _initialize
+        _initialize(self.member, self)
+
     def validate(self):
         self.set_defaults_from_member()
         self.set_defaults_from_cohort()
@@ -191,8 +207,8 @@ class Club100Enrollment(Document):
             frappe.throw("Configure Self Workouts Per Week on the Plan (1–7).")
         if len(rows) != expected:
             frappe.throw(f"Select exactly {expected} different workout days.")
-        from club100_core.self_workout_cycle import get_active_self_workout_cycle
-        get_active_self_workout_cycle(self.program, self.plan)
+        from club100_core.api.self_workouts import _require_standard_curriculum
+        _require_standard_curriculum(self.program)
 
         seen = set()
         for row in rows:

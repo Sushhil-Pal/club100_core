@@ -706,6 +706,64 @@ def _ensure_member_for_paid_enrollment(
     return member
 
 
+def _link_converted_self_trial(enrollment):
+    """Record successful Self trial conversion without ending trial access."""
+    trial_name = getattr(enrollment, "origin_trial_enrollment", None)
+    if not trial_name or enrollment.website_source != "PWA Commerce":
+        return
+
+    if enrollment.payment_status != "Paid":
+        frappe.throw("Trial conversion requires verified payment.")
+
+    # Serialize conversion bookkeeping for the same trial.
+    frappe.db.sql(
+        "SELECT name FROM `tabClub100 Enrollment` WHERE name=%s FOR UPDATE",
+        trial_name,
+    )
+
+    trial = frappe.db.get_value(
+        "Club100 Enrollment",
+        trial_name,
+        [
+            "name", "member", "program", "plan", "is_trial",
+            "end_date", "converted_enrollment",
+        ],
+        as_dict=True,
+    )
+
+    if not trial or not trial.is_trial:
+        frappe.throw("Original Self trial was not found.")
+
+    if (
+        trial.member != enrollment.member
+        or trial.program != enrollment.program
+        or trial.plan != enrollment.plan
+    ):
+        frappe.throw("Paid enrollment does not match the original Self trial.")
+
+    if not trial.end_date or not enrollment.start_date:
+        frappe.throw("Trial conversion requires membership dates.")
+
+    if getdate(enrollment.start_date) <= getdate(trial.end_date):
+        frappe.throw("Paid membership must not overlap the Self trial.")
+
+    if (
+        trial.converted_enrollment
+        and trial.converted_enrollment != enrollment.name
+    ):
+        frappe.throw("This Self trial is linked to another paid enrollment.")
+
+    frappe.db.set_value(
+        "Club100 Enrollment",
+        trial_name,
+        {
+            "trial_status": "Converted",
+            "converted_enrollment": enrollment.name,
+        },
+        update_modified=False,
+    )
+
+
 def _finalize_paid_enrollment_doc(
     enrollment,
     issue_registration_token=False,
@@ -794,6 +852,9 @@ def _finalize_paid_enrollment_doc(
     enrollment.save(
         ignore_permissions=True
     )
+
+    # Payment succeeded: link the original Self trial to this paid order.
+    _link_converted_self_trial(enrollment)
 
     if (
         getattr(

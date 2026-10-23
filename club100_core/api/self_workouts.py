@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 import json
 
 import frappe
-from frappe.utils import cint, getdate, now_datetime
+from frappe.utils import cint, getdate, now_datetime, get_datetime
 
 from club100_core.api.member import _get_current_member
-from club100_core.self_workout_cycle import get_active_self_workout_cycle
+from club100_core.curriculum.self_schedule import self_curriculum_context, curriculum_for_slot
 
 WEEKDAYS = {name: index for index, name in enumerate((
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
@@ -23,7 +23,7 @@ def _enrollment(member, enrollment_id):
     row = frappe.db.get_value(
         "Club100 Enrollment",
         {"name": enrollment_id, "member": member.name, "status": "Active", "pricing_model": "Online Plan"},
-        ["name", "program", "plan", "start_date", "end_date", "status"],
+        ["name", "member", "program", "plan", "start_date", "end_date", "status"],
         as_dict=True,
     )
     if not row or not row.plan:
@@ -46,10 +46,8 @@ def _configuration(enrollment):
         frappe.throw("Enrollment is not a Self plan", frappe.ValidationError)
     if not 1 <= cint(plan.self_workouts_per_week) <= 7:
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)
-    cycle = get_active_self_workout_cycle(enrollment.program, enrollment.plan)
-    content_ids = [row.workout_content for row in sorted(cycle.workouts, key=lambda x: cint(x.sequence_no))]
-    if not content_ids:
-        frappe.throw("Self workout cycle has no workouts", frappe.ValidationError)
+    # Curriculum is authoritative; the retired legacy cycle is never consulted.
+    _require_standard_curriculum(enrollment.program)
     slots = frappe.get_all(
         "Club100 Self Workout Slot", filters={"parent": enrollment.name, "parenttype": "Club100 Enrollment", "parentfield": "self_workout_slots"},
         fields=["weekday", "start_time"], order_by="idx asc",
@@ -59,7 +57,7 @@ def _configuration(enrollment):
     for slot in slots:
         if slot.weekday not in WEEKDAYS or slot.start_time is None:
             frappe.throw("Invalid Self workout slot", frappe.ValidationError)
-    return plan, cycle, content_ids, slots
+    return plan, None, [], slots
 
 
 def _revisions(enrollment, baseline_slots):
@@ -177,39 +175,101 @@ def revise_self_workout_schedule(enrollment_id, effective_from, slots):
     return {"revision": new_doc.name, "effectiveFrom": str(effective), "slots": parsed}
 
 
-def _workout_data(content_ids):
-    records = frappe.get_all("Club100 Workout Content", filters={"name": ["in", content_ids]},
-        fields=["name", "title", "format", "fitness_level", "duration_minutes", "equipment_required", "thumbnail", "instructions", "status", "publish_to_app", "video_url"])
-    return {r.name: r for r in records}
+def _require_standard_curriculum(program):
+    # One shared curriculum engine, independent of the deprecated Self Cycle.
+    if not frappe.db.exists("Club100 Program Curriculum", {
+        "program": program, "track": "Standard", "level_code": "L1", "active": 1,
+    }):
+        frappe.throw("An active Standard curriculum is required", frappe.ValidationError)
 
 
-def _build(enrollment, plan, cycle, content_ids, content, ordinal, scheduled_at, now, include_video=False):
-    index = ordinal % len(content_ids)
-    if ordinal >= len(content_ids) and not cint(cycle.repeat_cycle):
-        return None
-    workout = content.get(content_ids[index])
-    if not workout or workout.status != "Active" or not cint(workout.publish_to_app):
-        return None
-    duration = max(0, cint(workout.duration_minutes))
+def _legacy_activity(workout_id):
+    # Old started/completed workouts retain their original content references.
+    return frappe.db.get_value("Club100 Self Workout Activity", {"workout_id": workout_id},
+                               ["name", "workout_content", "curriculum_snapshot"], as_dict=True)
+
+
+def _duration_minutes(text):
+    # Workbooks express duration as e.g. '50–55 min'. Never use it for permission
+    # without fallback, since access duration must remain explicit and predictable.
+    numbers = __import__('re').findall(r"\d+", str(text or ""))
+    return int(numbers[0]) if numbers else 60
+
+
+def _build(enrollment, plan, cycle, content_ids, content, ordinal, scheduled_at, now, include_video=False, curriculum_context=None):
+    workout_id = f"{enrollment.name}:{scheduled_at.date().isoformat()}:{ordinal + 1}"
+    activity = _legacy_activity(workout_id)
+    historical_unassigned = False
+    prescribed = curriculum_for_slot(curriculum_context, ordinal, scheduled_at) if curriculum_context else None
+    old_content = None
+    if activity and activity.workout_content:
+        old_content = frappe.db.get_value("Club100 Workout Content", activity.workout_content,
+            ["name", "title", "format", "fitness_level", "duration_minutes", "equipment_required", "thumbnail", "instructions", "video_url"], as_dict=True)
+    snapshot = None
+    if activity and activity.curriculum_snapshot:
+        try:
+            snapshot = json.loads(activity.curriculum_snapshot)
+        except (ValueError, TypeError):
+            frappe.throw("Stored curriculum snapshot is invalid", frappe.ValidationError)
+    # Historical legacy workouts use the original recorded Workout Content.
+    if old_content and not snapshot:
+        title = old_content.title
+        fmt = old_content.format
+        level = old_content.fitness_level
+        duration = cint(old_content.duration_minutes)
+        equipment = old_content.equipment_required
+        thumb = old_content.thumbnail
+        content_name = old_content.name
+        active_prescription = None
+    else:
+        active_prescription = snapshot or prescribed
+        if not active_prescription:
+            # Before the journey was introduced, unstarted calendar slots had no
+            # durable workout-content assignment. Do not invent a retroactive
+            # prescription or fail the entire month-long schedule response.
+            journey = curriculum_context.get("journey") if curriculum_context else None
+            if not journey or scheduled_at >= get_datetime(journey.creation):
+                frappe.throw("No assigned curriculum for this workout slot", frappe.ValidationError)
+            historical_unassigned = True
+            title = "Past workout (not assigned)"
+            fmt = None
+            level = None
+            duration = 60
+            equipment = None
+            thumb = None
+            content_name = None
+        else:
+            detail = active_prescription["prescription"]
+            title = detail["session_title"]
+            fmt = detail["workout_format"]
+            level = {"L1":"Core","L2":"Strong","L3":"Performance"}.get(active_prescription["levelCode"])
+            duration = _duration_minutes(detail.get("duration"))
+            equipment = detail.get("equipment")
+            thumb = None
+            content_name = None
     grace = max(0, cint(plan.workout_access_after_minutes))
     end_at = scheduled_at + timedelta(minutes=duration + grace)
-    state = "Locked" if now < scheduled_at else ("Available" if now <= end_at else "Expired")
+    state = "Expired" if historical_unassigned else (
+        "Locked" if now < scheduled_at else ("Available" if now <= end_at else "Expired")
+    )
     result = {
-        "id": f"{enrollment.name}:{scheduled_at.date().isoformat()}:{ordinal + 1}",
-        "enrollment": enrollment.name, "sequenceNo": ordinal + 1,
-        "cycle": cycle.name, "workoutContent": workout.name,
-        "title": workout.title, "format": workout.format, "fitnessLevel": workout.fitness_level,
-        "durationMinutes": duration, "equipmentRequired": workout.equipment_required,
-        "thumbnail": workout.thumbnail,
-        "scheduledDate": scheduled_at.date().isoformat(), "startTime": scheduled_at.time().isoformat(),
-        "availableFrom": scheduled_at.isoformat(), "availableUntil": end_at.isoformat(), "accessState": state,
+        "id": workout_id, "enrollment": enrollment.name, "sequenceNo": ordinal + 1,
+        "cycle": (active_prescription["curriculum"] if active_prescription else "Historical"),
+        "workoutContent": content_name, "title": title, "format": fmt,
+        "fitnessLevel": level, "durationMinutes": duration,
+        "equipmentRequired": equipment, "thumbnail": thumb,
+        "scheduledDate": scheduled_at.date().isoformat(),
+        "startTime": scheduled_at.time().isoformat(),
+        "availableFrom": scheduled_at.isoformat(), "availableUntil": end_at.isoformat(),
+        "accessState": state,
+        "curriculumWorkout": active_prescription,
     }
     if include_video:
-        result["instructions"] = workout.instructions
-        result["videoUrl"] = workout.video_url if state == "Available" else None
+        detail = (active_prescription or {}).get("prescription") or {}
+        result["instructions"] = old_content.instructions if old_content and not snapshot else None
+        result["videoUrl"] = (old_content.video_url if old_content and not snapshot and state == "Available" else None)
+        result["prescription"] = detail
     return result
-
-
 
 
 @frappe.whitelist(methods=["GET"])
@@ -223,7 +283,7 @@ def get_self_workout_schedule_settings(enrollment_id):
     count = cint(plan.self_workouts_per_week)
     if not 1 <= count <= 7:
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)
-    get_active_self_workout_cycle(enrollment.program, enrollment.plan)
+    _require_standard_curriculum(enrollment.program)
     baseline = frappe.get_all("Club100 Self Workout Slot",
         filters={"parent": enrollment.name, "parenttype": "Club100 Enrollment",
                  "parentfield": "self_workout_slots"},
@@ -259,7 +319,7 @@ def set_initial_self_workout_schedule(enrollment_id, slots):
         ["plan_code", "self_workouts_per_week"], as_dict=True)
     if not plan or plan.plan_code != "self":
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)
-    get_active_self_workout_cycle(enrollment.program, enrollment.plan)
+    _require_standard_curriculum(enrollment.program)
     count = cint(plan.self_workouts_per_week)
     if not 1 <= count <= 7:
         frappe.throw("Self plan is not fully configured", frappe.ValidationError)
@@ -287,8 +347,8 @@ def list_virtual_workouts(enrollment_id, from_date=None, to_date=None):
     if start < getdate(now) - timedelta(days=90) or finish > getdate(now) + timedelta(days=90):
         frappe.throw("Date window must be within 90 days of today", frappe.ValidationError)
     plan, cycle, ids, slots = _configuration(enrollment)
-    content = _workout_data(ids)
-    records = [_build(enrollment, plan, cycle, ids, content, ordinal, when, now)
+    curriculum_context = self_curriculum_context(enrollment)
+    records = [_build(enrollment, plan, cycle, ids, None, ordinal, when, now, curriculum_context=curriculum_context)
                for ordinal, when in _scheduled(enrollment, slots, start, finish)]
     return {"enrollment": enrollment.name, "workouts": [r for r in records if r]}
 
@@ -308,7 +368,8 @@ def virtual_workout_detail(workout_id):
     dates = _scheduled(enrollment, slots, day, day)
     if not dates or dates[0][0] + 1 != int(parts[2]):
         frappe.throw("Virtual workout not found", frappe.DoesNotExistError)
-    workout = _build(enrollment, plan, cycle, ids, _workout_data(ids), dates[0][0], dates[0][1], now, True)
+    workout = _build(enrollment, plan, cycle, ids, None, dates[0][0], dates[0][1], now, True,
+                     curriculum_context=self_curriculum_context(enrollment))
     if not workout:
         frappe.throw("Virtual workout not found", frappe.DoesNotExistError)
     return workout

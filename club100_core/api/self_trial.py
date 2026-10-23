@@ -2,7 +2,7 @@
 import frappe
 from frappe.utils import add_days, getdate, now_datetime, nowdate
 from club100_core.api.member import _get_current_member
-from club100_core.self_workout_cycle import get_active_self_workout_cycle
+from club100_core.api.self_workouts import _require_standard_curriculum
 
 
 def _trial_context(member):
@@ -43,7 +43,7 @@ def activate_self_trial(program):
     plan = frappe.db.get_value("Club100 Plan", {"plan_code": "self", "status": "Active"}, "name")
     if not plan:
         frappe.throw("The Self plan is not available.", frappe.ValidationError)
-    get_active_self_workout_cycle(program, plan)
+    _require_standard_curriculum(program)
     today = getdate(nowdate())
     # Inclusive day range: activation day + 13 more calendar days.
     end = add_days(today, 13)
@@ -72,12 +72,9 @@ def self_trial_programs():
     plan = frappe.db.get_value("Club100 Plan", {"plan_code": "self", "status": "Active"}, "name")
     if not plan:
         return {"programs": []}
-    cycles = frappe.get_all(
-        "Club100 Self Workout Cycle",
-        filters={"plan": plan, "active": 1},
-        fields=["program"],
-    )
-    ids = sorted({row.program for row in cycles if row.program})
+    curricula = frappe.get_all("Club100 Program Curriculum",
+        filters={"track": "Standard", "level_code": "L1", "active": 1}, fields=["program"])
+    ids = sorted({row.program for row in curricula if row.program})
     if not ids:
         return {"programs": []}
     rows = frappe.get_all(

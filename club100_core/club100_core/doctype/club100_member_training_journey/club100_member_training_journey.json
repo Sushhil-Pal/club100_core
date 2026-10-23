@@ -1,0 +1,116 @@
+{
+  "doctype": "DocType",
+  "name": "Club100 Member Training Journey",
+  "module": "Club100 Core",
+  "custom": 0,
+  "istable": 0,
+  "engine": "InnoDB",
+  "autoname": "field:member",
+  "field_order": [
+    "member",
+    "program",
+    "track",
+    "level_code",
+    "curriculum",
+    "cycle_number",
+    "week_number",
+    "session_number",
+    "last_enrollment",
+    "last_changed_by",
+    "last_level_changed_on",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "member",
+      "label": "Member",
+      "fieldtype": "Link",
+      "options": "Club100 Member",
+      "reqd": 1
+    },
+    {
+      "fieldname": "program",
+      "label": "Program",
+      "fieldtype": "Link",
+      "options": "Club100 Program",
+      "reqd": 1
+    },
+    {
+      "fieldname": "track",
+      "label": "Track",
+      "fieldtype": "Select",
+      "options": "Standard\nSociety",
+      "reqd": 1,
+      "default": "Standard"
+    },
+    {
+      "fieldname": "level_code",
+      "label": "Level Code",
+      "fieldtype": "Select",
+      "options": "L1\nL2\nL3",
+      "reqd": 1,
+      "default": "L1"
+    },
+    {
+      "fieldname": "curriculum",
+      "label": "Curriculum",
+      "fieldtype": "Link",
+      "options": "Club100 Program Curriculum",
+      "reqd": 1
+    },
+    {
+      "fieldname": "cycle_number",
+      "label": "Cycle Number",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "week_number",
+      "label": "Week Number",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "session_number",
+      "label": "Session Number",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "last_enrollment",
+      "label": "Last Enrollment",
+      "fieldtype": "Link",
+      "options": "Club100 Enrollment"
+    },
+    {
+      "fieldname": "last_changed_by",
+      "label": "Last Changed By",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "last_level_changed_on",
+      "label": "Last Level Changed On",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

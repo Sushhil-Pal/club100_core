@@ -12,6 +12,11 @@
   "program",
   "trainer",
   "workout_format",
+  "society_curriculum_code",
+  "society_curriculum_position",
+  "society_original_slot_date",
+  "society_original_slot_time",
+  "society_override_reason",
   "workout_content",
   "session_date",
   "start_time",
@@ -145,6 +150,40 @@
    "fieldname": "additional_instructions",
    "fieldtype": "Small Text",
    "label": "Additional Preparation Instructions"
+  },
+  {
+   "fieldname": "society_curriculum_code",
+   "fieldtype": "Link",
+   "options": "Club100 Program Curriculum",
+   "label": "Society Curriculum",
+   "read_only": 1
+  },
+  {
+   "fieldname": "society_curriculum_position",
+   "fieldtype": "Int",
+   "label": "Society Curriculum Position",
+   "read_only": 1,
+   "description": "Fixed 1-based sequence number from curriculum start"
+  },
+  {
+   "fieldname": "society_override_reason",
+   "fieldtype": "Small Text",
+   "label": "Society Format Override Reason",
+   "description": "Optional. Used only when the actual workout format differs from the assigned Society curriculum format."
+  },
+  {
+   "fieldname": "society_original_slot_date",
+   "fieldtype": "Date",
+   "label": "Society Original Slot Date",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "society_original_slot_time",
+   "fieldtype": "Time",
+   "label": "Society Original Slot Time",
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
