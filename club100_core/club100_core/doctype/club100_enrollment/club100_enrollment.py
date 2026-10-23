@@ -246,13 +246,49 @@ class Club100Enrollment(Document):
                 )
 
     def validate_sponsorship(self):
-        if (
-            self.enrollment_type == "Sponsored"
-            and not self.sponsored_by
-        ):
-            frappe.throw(
-                "Sponsored By is required for sponsored enrollments."
-            )
+        """Admin-controlled corporate membership; do not impersonate a paid order.
+
+        The existing Individual / Online Plan Razorpay and trial flows are
+        unchanged. Society Batch membership remains handled by its own
+        pricing/cohort checks.
+        """
+        if self.enrollment_type != "Sponsored":
+            if self.sponsored_by:
+                frappe.throw(
+                    "Individual enrollment cannot have a sponsoring organization. "
+                    "Select Sponsored enrollment type or clear Sponsored By."
+                )
+            return
+
+        if not self.sponsored_by:
+            frappe.throw("Sponsored By is required for sponsored enrollments.")
+
+        # Preserve existing Society sponsorship use-cases; Corporate v1
+        # adds safeguards only for sponsored Online Plan enrollments.
+        if self.pricing_model != "Online Plan":
+            return
+
+        if self.plan not in ("Self", "Group", "Group Plus"):
+            frappe.throw("Corporate memberships support Self, Group or Group Plus.")
+
+        if self.payment_status != "Not Required":
+            frappe.throw("Corporate sponsorship requires Payment Status: Not Required.")
+
+        if self.website_source == "PWA Commerce":
+            frappe.throw("Corporate sponsorship cannot originate from member checkout.")
+
+        if self.status not in ("Scheduled", "Active"):
+            # An admin may create a draft Registered enrollment first.
+            return
+
+        if not self.member or not self.start_date or not self.end_date:
+            frappe.throw("Corporate activation requires Member, Start Date and End Date.")
+
+        if frappe.session.user != "Administrator" and "System Manager" not in frappe.get_roles():
+            frappe.throw("Only ERP System Managers can activate sponsored memberships.", frappe.PermissionError)
+
+        if self.status == "Active" and getdate(self.start_date) > getdate():
+            frappe.throw("Future corporate memberships must be Scheduled until their start date.")
 
     def _get_cohort(self):
         if not self.cohort:
