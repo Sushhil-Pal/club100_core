@@ -74,7 +74,7 @@ def upcoming_sessions(enrollment_id=None):
             "name",
             "program",
             "trainer",
-            "workout_content",
+            "workout_format",
             "session_date",
             "start_time",
             "end_time",
@@ -102,24 +102,15 @@ def upcoming_sessions(enrollment_id=None):
                 "trainer_name",
             )
 
-        if session.workout_content:
-            workout = frappe.db.get_value(
-                "Club100 Workout Content",
-                session.workout_content,
-                [
-                    "title",
-                    "format",
-                    "fitness_level",
-                    "equipment_required",
-                ],
-                as_dict=True,
+        workout_format = session.workout_format
+        if session.program:
+            workout_title = frappe.db.get_value(
+                "Club100 Program", session.program, "program_name"
             )
-
-            if workout:
-                workout_title = workout.title
-                workout_format = workout.format
-                workout_level = workout.fitness_level
-                equipment_required = workout.equipment_required
+        if workout_format:
+            equipment_required = frappe.db.get_value(
+                "Club100 Workout Format", workout_format, "default_items_to_bring"
+            )
 
         result.append(
             {
@@ -140,7 +131,7 @@ def upcoming_sessions(enrollment_id=None):
                 "equipment": (
                     [
                         item.strip()
-                        for item in equipment_required.split(",")
+                        for item in equipment_required.splitlines()
                         if item.strip()
                     ]
                     if equipment_required
@@ -170,7 +161,7 @@ def session_detail(session_id, enrollment_id=None):
             "cohort",
             "program",
             "trainer",
-            "workout_content",
+            "workout_format",
             "session_date",
             "start_time",
             "end_time",
@@ -200,72 +191,30 @@ def session_detail(session_id, enrollment_id=None):
             "trainer_name",
         )
 
-    workout = None
-
-    if session.workout_content:
-        workout = frappe.db.get_value(
-            "Club100 Workout Content",
-            session.workout_content,
-            [
-                "name",
-                "title",
-                "format",
-                "fitness_level",
-                "duration_minutes",
-                "equipment_required",
-                "video_url",
-                "instructions",
-            ],
-            as_dict=True,
-        )
+    workout_format = session.workout_format
+    program_title = (frappe.db.get_value("Club100 Program", session.program, "program_name")
+                     if session.program else None)
+    equipment_required = (frappe.db.get_value(
+        "Club100 Workout Format", workout_format, "default_items_to_bring")
+        if workout_format else None)
 
     return {
         "id": session.name,
-        "title": (
-            workout.format
-            if workout and workout.format
-            else "Session"
-        ),
-        "subtitle": (
-            workout.title
-            if workout and workout.title
-            else "Club100 Session"
-        ),
+        "title": workout_format or "Session",
+        "subtitle": program_title or "Club100 Session",
         "date": str(session.session_date),
         "startTime": str(session.start_time),
         "endTime": str(session.end_time),
         "trainer": trainer_name or "",
-        "level": (
-            workout.fitness_level
-            if workout and workout.fitness_level
-            else "Beginner"
-        ),
-        "format": (
-            workout.format
-            if workout and workout.format
-            else None
-        ),
+        "level": "Beginner",  # Legacy display default; trainer-led level remains trainer-owned.
+        "format": workout_format,
         "status": session.status,
         "deliveryMode": session.delivery_mode,
         "meetingProvider": session.meeting_provider,
         "meetingUrl": session.meeting_url,
         "equipment": (
-            [
-                item.strip()
-                for item in workout.equipment_required.split(",")
-                if item.strip()
-            ]
-            if workout and workout.equipment_required
-            else []
+            [line.strip() for line in equipment_required.splitlines() if line.strip()]
+            if equipment_required else []
         ),
-        "workout": (
-            {
-                "id": workout.name,
-                "videoUrl": workout.video_url,
-                "durationMinutes": workout.duration_minutes,
-                "instructions": workout.instructions,
-            }
-            if workout
-            else None
-        ),
+        "workout": None,  # Self workout prescriptions are served by virtual_workout_detail.
     }

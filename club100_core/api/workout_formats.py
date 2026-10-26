@@ -23,8 +23,6 @@ def seed_workout_formats():
 
 def resolve_session_preparation(session):
     fmt = session.workout_format
-    if not fmt and session.workout_content:
-        fmt = frappe.db.get_value("Club100 Workout Content", session.workout_content, "format")
     defaults = frappe.db.get_value(
         "Club100 Workout Format", fmt,
         ["description", "default_items_to_bring", "preparation_instructions"], as_dict=True

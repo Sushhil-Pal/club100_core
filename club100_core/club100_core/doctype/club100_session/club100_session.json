@@ -8,7 +8,6 @@
  "engine": "InnoDB",
  "field_order": [
   "cohort",
-  "plan",
   "program",
   "trainer",
   "workout_format",
@@ -17,7 +16,6 @@
   "society_original_slot_date",
   "society_original_slot_time",
   "society_override_reason",
-  "workout_content",
   "session_date",
   "start_time",
   "end_time",
@@ -41,13 +39,6 @@
    "options": "Club100 Cohort"
   },
   {
-   "fieldname": "plan",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Plan",
-   "options": "Club100 Plan"
-  },
-  {
    "fieldname": "program",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -61,12 +52,6 @@
    "in_list_view": 1,
    "label": "Trainer",
    "options": "Club100 Trainer"
-  },
-  {
-   "fieldname": "workout_content",
-   "fieldtype": "Link",
-   "label": "Workout Content",
-   "options": "Club100 Workout Content"
   },
   {
    "fieldname": "session_date",

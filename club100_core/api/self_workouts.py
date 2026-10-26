@@ -57,7 +57,7 @@ def _configuration(enrollment):
     for slot in slots:
         if slot.weekday not in WEEKDAYS or slot.start_time is None:
             frappe.throw("Invalid Self workout slot", frappe.ValidationError)
-    return plan, None, [], slots
+    return plan, slots
 
 
 def _revisions(enrollment, baseline_slots):
@@ -183,10 +183,11 @@ def _require_standard_curriculum(program):
         frappe.throw("An active Standard curriculum is required", frappe.ValidationError)
 
 
-def _legacy_activity(workout_id):
-    # Old started/completed workouts retain their original content references.
-    return frappe.db.get_value("Club100 Self Workout Activity", {"workout_id": workout_id},
-                               ["name", "workout_content", "curriculum_snapshot"], as_dict=True)
+def _activity_snapshot(workout_id):
+    return frappe.db.get_value(
+        "Club100 Self Workout Activity", {"workout_id": workout_id},
+        "curriculum_snapshot",
+    )
 
 
 def _duration_minutes(text):
@@ -196,79 +197,78 @@ def _duration_minutes(text):
     return int(numbers[0]) if numbers else 60
 
 
-def _build(enrollment, plan, cycle, content_ids, content, ordinal, scheduled_at, now, include_video=False, curriculum_context=None):
+def _build(enrollment, plan, ordinal, scheduled_at, now,
+           include_video=False, curriculum_context=None):
     workout_id = f"{enrollment.name}:{scheduled_at.date().isoformat()}:{ordinal + 1}"
-    activity = _legacy_activity(workout_id)
-    historical_unassigned = False
-    prescribed = curriculum_for_slot(curriculum_context, ordinal, scheduled_at) if curriculum_context else None
-    old_content = None
-    if activity and activity.workout_content:
-        old_content = frappe.db.get_value("Club100 Workout Content", activity.workout_content,
-            ["name", "title", "format", "fitness_level", "duration_minutes", "equipment_required", "thumbnail", "instructions", "video_url"], as_dict=True)
+    saved_snapshot = _activity_snapshot(workout_id)
     snapshot = None
-    if activity and activity.curriculum_snapshot:
+    if saved_snapshot:
         try:
-            snapshot = json.loads(activity.curriculum_snapshot)
+            snapshot = json.loads(saved_snapshot)
         except (ValueError, TypeError):
             frappe.throw("Stored curriculum snapshot is invalid", frappe.ValidationError)
-    # Historical legacy workouts use the original recorded Workout Content.
-    if old_content and not snapshot:
-        title = old_content.title
-        fmt = old_content.format
-        level = old_content.fitness_level
-        duration = cint(old_content.duration_minutes)
-        equipment = old_content.equipment_required
-        thumb = old_content.thumbnail
-        content_name = old_content.name
-        active_prescription = None
+    prescribed = curriculum_for_slot(curriculum_context, ordinal, scheduled_at) if curriculum_context else None
+    active_prescription = snapshot or prescribed
+    historical_unassigned = False
+    if not active_prescription:
+        journey = curriculum_context.get("journey") if curriculum_context else None
+        if not journey or scheduled_at >= get_datetime(journey.creation):
+            frappe.throw("No assigned curriculum for this workout slot", frappe.ValidationError)
+        historical_unassigned = True
+        title, fmt, level, duration, equipment = "Past workout (not assigned)", None, None, 60, None
     else:
-        active_prescription = snapshot or prescribed
-        if not active_prescription:
-            # Before the journey was introduced, unstarted calendar slots had no
-            # durable workout-content assignment. Do not invent a retroactive
-            # prescription or fail the entire month-long schedule response.
-            journey = curriculum_context.get("journey") if curriculum_context else None
-            if not journey or scheduled_at >= get_datetime(journey.creation):
-                frappe.throw("No assigned curriculum for this workout slot", frappe.ValidationError)
-            historical_unassigned = True
-            title = "Past workout (not assigned)"
-            fmt = None
-            level = None
-            duration = 60
-            equipment = None
-            thumb = None
-            content_name = None
-        else:
-            detail = active_prescription["prescription"]
-            title = detail["session_title"]
-            fmt = detail["workout_format"]
-            level = {"L1":"Core","L2":"Strong","L3":"Performance"}.get(active_prescription["levelCode"])
-            duration = _duration_minutes(detail.get("duration"))
-            equipment = detail.get("equipment")
-            thumb = None
-            content_name = None
+        detail = active_prescription["prescription"]
+        title = detail["session_title"]
+        fmt = detail["workout_format"]
+        level = {"L1": "Core", "L2": "Strong", "L3": "Performance"}.get(active_prescription["levelCode"])
+        duration = _duration_minutes(detail.get("duration"))
+        equipment = detail.get("equipment")
     grace = max(0, cint(plan.workout_access_after_minutes))
     end_at = scheduled_at + timedelta(minutes=duration + grace)
     state = "Expired" if historical_unassigned else (
         "Locked" if now < scheduled_at else ("Available" if now <= end_at else "Expired")
     )
+
+    # Never expose YouTube URLs in schedule list responses, curriculum previews,
+    # or nested curriculumWorkout payloads. Only the authorized detail endpoint
+    # may include videoUrl while accessState is Available.
+    public_prescription = None
+    if active_prescription:
+        public_prescription = dict(active_prescription)
+        fields = dict(active_prescription["prescription"])
+        fields.pop("video_url", None)
+        public_prescription["prescription"] = fields
+
     result = {
         "id": workout_id, "enrollment": enrollment.name, "sequenceNo": ordinal + 1,
-        "cycle": (active_prescription["curriculum"] if active_prescription else "Historical"),
-        "workoutContent": content_name, "title": title, "format": fmt,
+        "curriculum": active_prescription["curriculum"] if active_prescription else None,
+        "title": title, "format": fmt,
         "fitnessLevel": level, "durationMinutes": duration,
-        "equipmentRequired": equipment, "thumbnail": thumb,
+        "equipmentRequired": equipment,
         "scheduledDate": scheduled_at.date().isoformat(),
         "startTime": scheduled_at.time().isoformat(),
         "availableFrom": scheduled_at.isoformat(), "availableUntil": end_at.isoformat(),
         "accessState": state,
-        "curriculumWorkout": active_prescription,
+        "curriculumWorkout": public_prescription,
     }
     if include_video:
-        detail = (active_prescription or {}).get("prescription") or {}
-        result["instructions"] = old_content.instructions if old_content and not snapshot else None
-        result["videoUrl"] = (old_content.video_url if old_content and not snapshot and state == "Available" else None)
-        result["prescription"] = detail
+        # Activity snapshots retain the prescribed exercises but deliberately omit
+        # video_url (it must not be published in schedule/preview responses).
+        # For an already-started workout, resolve the current video's metadata
+        # only if its curriculum identity still matches the saved prescription.
+        # This avoids showing a different level/session's video after a change.
+        video_fields = (active_prescription or {}).get("prescription") or {}
+        if snapshot and prescribed and all(
+            snapshot.get(key) == prescribed.get(key)
+            for key in ("curriculum", "levelCode", "cycleNumber", "weekNumber", "sessionNumber")
+        ):
+            video_fields = prescribed.get("prescription") or {}
+        result["instructions"] = None
+        result["videoUrl"] = (
+            video_fields.get("video_url") if state == "Available"
+            and video_fields.get("video_provider") in (None, "", "YouTube") else None
+        )
+        result["prescription"] = dict(public_prescription["prescription"]) if public_prescription else {}
     return result
 
 
@@ -346,9 +346,9 @@ def list_virtual_workouts(enrollment_id, from_date=None, to_date=None):
         frappe.throw("Select a date window of 1 to 32 days", frappe.ValidationError)
     if start < getdate(now) - timedelta(days=90) or finish > getdate(now) + timedelta(days=90):
         frappe.throw("Date window must be within 90 days of today", frappe.ValidationError)
-    plan, cycle, ids, slots = _configuration(enrollment)
+    plan, slots = _configuration(enrollment)
     curriculum_context = self_curriculum_context(enrollment)
-    records = [_build(enrollment, plan, cycle, ids, None, ordinal, when, now, curriculum_context=curriculum_context)
+    records = [_build(enrollment, plan, ordinal, when, now, curriculum_context=curriculum_context)
                for ordinal, when in _scheduled(enrollment, slots, start, finish)]
     return {"enrollment": enrollment.name, "workouts": [r for r in records if r]}
 
@@ -364,11 +364,11 @@ def virtual_workout_detail(workout_id):
     now = now_datetime()
     if day < getdate(now) - timedelta(days=90) or day > getdate(now) + timedelta(days=90):
         frappe.throw("Workout outside supported date window", frappe.ValidationError)
-    plan, cycle, ids, slots = _configuration(enrollment)
+    plan, slots = _configuration(enrollment)
     dates = _scheduled(enrollment, slots, day, day)
     if not dates or dates[0][0] + 1 != int(parts[2]):
         frappe.throw("Virtual workout not found", frappe.DoesNotExistError)
-    workout = _build(enrollment, plan, cycle, ids, None, dates[0][0], dates[0][1], now, True,
+    workout = _build(enrollment, plan, dates[0][0], dates[0][1], now, True,
                      curriculum_context=self_curriculum_context(enrollment))
     if not workout:
         frappe.throw("Virtual workout not found", frappe.DoesNotExistError)

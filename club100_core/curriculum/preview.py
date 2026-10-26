@@ -12,7 +12,7 @@ SESSION_FIELDS = (
     "week_number", "session_number", "training_block", "workout_format",
     "format_session_number", "session_title", "objective", "warm_up",
     "main_block_a", "main_block_b", "finisher_skill", "cooldown",
-    "intensity", "equipment", "duration",
+    "intensity", "equipment", "duration", "video_provider", "video_url",
 )
 
 
@@ -31,6 +31,8 @@ def _preview(member_id):
     if len(rows) != 1:
         frappe.throw("Curriculum position must match exactly one workout", frappe.ValidationError)
     session = {key: getattr(rows[0], key, None) for key in SESSION_FIELDS}
+    # Preview must not bypass scheduled workout video access controls.
+    session.pop("video_url", None)
     return {
         "journey": journey_service._summary(journey),
         "session": session,

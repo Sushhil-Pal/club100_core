@@ -44,12 +44,13 @@ def start_self_workout(workout_id):
         return _payload(existing)
     if workout["accessState"] != "Available":
         frappe.throw("Workout is not currently available", frappe.PermissionError)
+    if not workout.get("curriculumWorkout"):
+        frappe.throw("Workout has no assigned curriculum prescription", frappe.ValidationError)
     doc = frappe.get_doc({
         "doctype": "Club100 Self Workout Activity",
         "member": member.name,
         "enrollment": enrollment.name,
         "workout_id": workout["id"],
-        "workout_content": workout["workoutContent"],
         "curriculum": (workout.get("curriculumWorkout") or {}).get("curriculum"),
         "curriculum_snapshot": json.dumps(workout["curriculumWorkout"], default=str) if workout.get("curriculumWorkout") else None,
         "scheduled_at": workout["availableFrom"].replace("T", " "),

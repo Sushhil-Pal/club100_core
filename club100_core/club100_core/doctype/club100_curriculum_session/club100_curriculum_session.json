@@ -24,7 +24,9 @@
     "core_variation",
     "strong_variation",
     "performance_variation",
-    "trainer_cues"
+    "trainer_cues",
+    "video_provider",
+    "video_url"
   ],
   "fields": [
     {
@@ -126,6 +128,17 @@
       "fieldname": "trainer_cues",
       "label": "Trainer Cues / Mixed-Level Safety",
       "fieldtype": "Text"
+    },
+    {
+      "fieldname": "video_provider",
+      "label": "Video Provider",
+      "fieldtype": "Select",
+      "options": "\nYouTube"
+    },
+    {
+      "fieldname": "video_url",
+      "label": "YouTube Video URL",
+      "fieldtype": "Data"
     }
   ],
   "permissions": [],

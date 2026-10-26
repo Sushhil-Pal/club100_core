@@ -13,48 +13,11 @@ class Club100Session(Document):
         self.validate_online_details()
 
     def validate_target(self):
-        has_cohort = bool(self.cohort)
-        has_plan = bool(self.plan)
-
-        if has_cohort == has_plan:
-            frappe.throw(
-                "Select exactly one session target: Cohort or Plan."
-            )
-
-        if has_cohort:
-            if not self.trainer:
-                frappe.throw(
-                    "Trainer is required for cohort sessions."
-                )
-            return
-
-        plan = frappe.db.get_value(
-            "Club100 Plan",
-            self.plan,
-            [
-                "plan_name",
-                "coach_led",
-            ],
-            as_dict=True,
-        )
-
-        if not plan:
-            frappe.throw("Plan not found.")
-
-        if plan.coach_led:
-            frappe.throw(
-                "Plan-targeted sessions are only supported for self-guided plans."
-            )
-
-        if self.trainer:
-            frappe.throw(
-                "Trainer must be blank for self-guided plan sessions."
-            )
-
-        if not self.workout_content:
-            frappe.throw(
-                "Workout Content is required for self-guided plan sessions."
-            )
+        # Self workouts are virtual and NEVER create a Club100 Session.
+        if not self.cohort:
+            frappe.throw("Trainer-led sessions must target a cohort.", frappe.ValidationError)
+        if not self.trainer:
+            frappe.throw("Trainer is required for cohort sessions.", frappe.ValidationError)
 
     def set_defaults_from_cohort(self):
         if not self.cohort:
@@ -136,8 +99,6 @@ class Club100Session(Document):
                 frappe.throw('Completed Society session override reason cannot be changed.', frappe.ValidationError)
             from club100_core.curriculum.society import position_from_ordinal
             prescribed = position_from_ordinal(int(self.society_curriculum_position) - 1)['format']
-            if self.workout_format != prescribed and self.workout_content:
-                frappe.throw('Override sessions must not link the standard Workout Content; use session notes instead.', frappe.ValidationError)
             if self.workout_format == prescribed:
                 self.society_override_reason = None
             return
@@ -175,25 +136,15 @@ class Club100Session(Document):
         expected = position['format']
         if not frappe.db.exists('Club100 Workout Format', expected):
             frappe.throw('Missing linked Club100 Workout Format: ' + expected, frappe.ValidationError)
-        if self.workout_content:
-            frappe.throw('Curriculum-driven Society sessions cannot also specify legacy Workout Content.', frappe.ValidationError)
         self.society_curriculum_code = curriculum.name
         self.society_curriculum_position = ordinal + 1
         self.workout_format = expected
 
     def validate_workout_format(self):
-        if self.workout_content:
-            content_format = frappe.db.get_value(
-                "Club100 Workout Content", self.workout_content, "format"
-            )
-            if content_format and self.workout_format and content_format != self.workout_format:
-                frappe.throw("Session Workout Format must match its Workout Content format.")
-            if content_format and not self.workout_format:
-                self.workout_format = content_format
-        # Existing records with no linked workout were created before the format
-        # field existed. Permit updating them until a format is configured.
-        if self.cohort and self.is_new() and not self.workout_format:
-            frappe.throw("Workout Format is required for new cohort sessions.")
+        # Cohort sessions use their own format. Society-assigned sessions already
+        # derive this from their curriculum in assign_society_curriculum().
+        if self.is_new() and not self.workout_format:
+            frappe.throw("Workout Format is required for new cohort sessions.", frappe.ValidationError)
 
     def validate_times(self):
         if not self.session_date or not self.start_time or not self.end_time:
@@ -206,10 +157,6 @@ class Club100Session(Document):
             frappe.throw("End Time must be after Start Time.")
 
     def validate_online_details(self):
-        # Self-guided plan sessions do not use a live meeting URL.
-        if self.plan and not self.cohort:
-            return
-
         if self.delivery_mode in ("Online", "Hybrid"):
             if self.status in ("Scheduled", "Live") and not self.meeting_url:
                 frappe.throw(

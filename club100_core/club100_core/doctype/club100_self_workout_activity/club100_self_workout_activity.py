@@ -12,7 +12,7 @@ class Club100SelfWorkoutActivity(Document):
         else:
             old = self.get_doc_before_save()
             if old:
-                immutable = ("member", "enrollment", "workout_id", "workout_content", "scheduled_at", "started_at")
+                immutable = ("member", "enrollment", "workout_id", "scheduled_at", "started_at")
                 if any(str(self.get(f)) != str(old.get(f)) for f in immutable):
                     frappe.throw("Workout activity identity cannot be edited", frappe.ValidationError)
                 if old.status == "Completed" and (self.status != "Completed" or str(self.completed_at) != str(old.completed_at)):
