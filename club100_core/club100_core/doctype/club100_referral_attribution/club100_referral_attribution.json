@@ -1,0 +1,144 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "format:C100-REF-{#####}",
+  "creation": "2026-10-29 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "referred_member",
+    "partner",
+    "referral_code",
+    "reward_track",
+    "policy",
+    "first_rate",
+    "renewal_rate",
+    "currency",
+    "minimum_duration_months",
+    "campaign",
+    "source",
+    "status",
+    "captured_on",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "referred_member",
+      "fieldtype": "Link",
+      "label": "Referred Member",
+      "options": "Club100 Member",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "partner",
+      "fieldtype": "Link",
+      "label": "Referral Partner",
+      "options": "Club100 Referral Partner",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "referral_code",
+      "fieldtype": "Data",
+      "label": "Referral Code at Capture",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "reward_track",
+      "fieldtype": "Select",
+      "label": "Reward Track at Capture",
+      "options": "Member Credit\nAmbassador Cash",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "policy",
+      "fieldtype": "Link",
+      "label": "Policy at Capture",
+      "options": "Club100 Referral Policy",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "first_rate",
+      "fieldtype": "Percent",
+      "label": "First Purchase Rate Snapshot",
+      "read_only": 1
+    },
+    {
+      "fieldname": "renewal_rate",
+      "fieldtype": "Percent",
+      "label": "Renewal Rate Snapshot",
+      "read_only": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "Currency Snapshot",
+      "options": "Currency",
+      "read_only": 1
+    },
+    {
+      "fieldname": "minimum_duration_months",
+      "fieldtype": "Int",
+      "label": "Minimum Duration Snapshot",
+      "read_only": 1
+    },
+    {
+      "fieldname": "campaign",
+      "fieldtype": "Link",
+      "label": "Campaign (Optional)",
+      "options": "Club100 Referral Campaign"
+    },
+    {
+      "fieldname": "source",
+      "fieldtype": "Select",
+      "label": "Source",
+      "options": "Member PWA\nWebsite\nAmbassador Link\nAdmin",
+      "default": "Member PWA"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Captured\nInvalidated",
+      "default": "Captured",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "captured_on",
+      "fieldtype": "Datetime",
+      "label": "Captured On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Internal Notes"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "module": "Club100 Core",
+  "name": "Club100 Referral Attribution",
+  "naming_rule": "Expression (old style)",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

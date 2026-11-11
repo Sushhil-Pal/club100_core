@@ -39,6 +39,27 @@ class Club100Enrollment(Document):
         self.validate_cohort_compatibility()
         self.validate_cohort_capacity()
         self.validate_duplicate_active_enrollment()
+        self.protect_wallet_checkout_tender()
+
+    def protect_wallet_checkout_tender(self):
+        """Forbid editing gross and tender snapshot of a funded enrollment."""
+        if self.is_new():
+            return
+        original = self.get_doc_before_save()
+        if not original or not original.get('wallet_reservation_key'):
+            return
+        from club100_core.wallet.logic import money
+        for field in ('wallet_reservation_key', 'amount_payable',
+                      'wallet_applied_amount', 'gateway_due_amount', 'member',
+                      'origin_trial_enrollment'):
+            left, right = original.get(field), self.get(field)
+            if field in ('amount_payable','wallet_applied_amount','gateway_due_amount'):
+                same = money(left) == money(right)
+            else:
+                same = str(left or '') == str(right or '')
+            if not same:
+                frappe.throw('Wallet checkout financial field cannot be changed: ' + field)
+
 
     def set_defaults_from_member(self):
         if not self.member:

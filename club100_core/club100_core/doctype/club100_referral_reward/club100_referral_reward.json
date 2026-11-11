@@ -1,0 +1,245 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:event_key",
+ "creation": "2026-10-29 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "event_key",
+  "attribution",
+  "partner",
+  "referred_member",
+  "enrollment",
+  "payment_reference",
+  "reward_track",
+  "reward_event",
+  "basis_amount",
+  "rate",
+  "reward_amount",
+  "currency",
+  "basis_verification_status",
+  "status",
+  "eligible_on",
+  "settlement_reference",
+  "settled_on",
+  "notes",
+  "verified_basis_amount",
+  "verified_reward_amount",
+  "finance_proof_reference",
+  "finance_verified_by",
+  "finance_verified_on",
+  "credit_validity_type",
+  "credit_expires_on",
+  "auto_tax_rate_percent",
+  "basis_evidence_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_key",
+   "fieldtype": "Data",
+   "label": "Unique Payment Event Key",
+   "reqd": 1,
+   "unique": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "attribution",
+   "fieldtype": "Link",
+   "label": "Referral Attribution",
+   "options": "Club100 Referral Attribution",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "partner",
+   "fieldtype": "Link",
+   "label": "Referral Partner",
+   "options": "Club100 Referral Partner",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "referred_member",
+   "fieldtype": "Link",
+   "label": "Referred Member",
+   "options": "Club100 Member",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "enrollment",
+   "fieldtype": "Link",
+   "label": "Enrollment",
+   "options": "Club100 Enrollment",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_reference",
+   "fieldtype": "Data",
+   "label": "Payment Reference",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "reward_track",
+   "fieldtype": "Select",
+   "label": "Reward Track",
+   "options": "Member Credit\nAmbassador Cash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reward_event",
+   "fieldtype": "Select",
+   "label": "Reward Event",
+   "options": "First Purchase\nRenewal\nAdjustment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_amount",
+   "fieldtype": "Currency",
+   "label": "Provisional Payment Basis (Gross Until Verified)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Reward Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reward_amount",
+   "fieldtype": "Currency",
+   "label": "Provisional Reward Estimate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nApproved\nAvailable\nOn Hold\nRedeemed\nPaid\nReversed",
+   "default": "Pending",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "eligible_on",
+   "fieldtype": "Date",
+   "label": "Eligible On"
+  },
+  {
+   "fieldname": "settlement_reference",
+   "fieldtype": "Data",
+   "label": "Cash Payout / Membership Credit Reference"
+  },
+  {
+   "fieldname": "settled_on",
+   "fieldtype": "Datetime",
+   "label": "Settled On"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Internal Notes"
+  },
+  {
+   "fieldname": "basis_verification_status",
+   "fieldtype": "Select",
+   "label": "Reward Basis Verification",
+   "options": "Unverified\nVerified",
+   "default": "Unverified",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Only a future trusted finance workflow may verify net-of-tax amount and make rewards payable."
+  },
+  {
+   "fieldname": "verified_basis_amount",
+   "fieldtype": "Currency",
+   "label": "Finance-Verified Eligible Basis (Excl. Tax)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_reward_amount",
+   "fieldtype": "Currency",
+   "label": "Finance-Verified Reward",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finance_proof_reference",
+   "fieldtype": "Data",
+   "label": "Finance / Invoice Verification Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finance_verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "finance_verified_on",
+   "fieldtype": "Datetime",
+   "label": "Finance Verified On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "credit_validity_type",
+   "fieldtype": "Select",
+   "label": "Member Credit Validity",
+   "read_only": 1,
+   "options": "Lifetime\nExpires On"
+  },
+  {
+   "fieldname": "credit_expires_on",
+   "fieldtype": "Date",
+   "label": "Member Credit Expiry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "auto_tax_rate_percent",
+   "fieldtype": "Percent",
+   "label": "Captured Checkout GST Rate (Local Pilot)",
+   "read_only": 1,
+   "description": "Trusted server-side GST rate captured when Razorpay reward event was created. Local pilot only."
+  },
+  {
+   "fieldname": "basis_evidence_type",
+   "fieldtype": "Select",
+   "label": "Basis Evidence Type",
+   "options": "\nFinance\nSubmitted Invoice\nLocal Tax Snapshot",
+   "read_only": 1,
+   "description": "Verification source. Local Tax Snapshot is NOT a posted Sales Invoice."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "module": "Club100 Core",
+ "name": "Club100 Referral Reward",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,85 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "field:member",
+  "creation": "2026-10-30 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "wallet_overview_section",
+    "wallet_dashboard",
+    "wallet_details_section",
+    "member",
+    "currency",
+    "status"
+  ],
+  "fields": [
+    {
+      "fieldname": "wallet_overview_section",
+      "fieldtype": "Section Break",
+      "label": "Wallet Overview"
+    },
+    {
+      "fieldname": "wallet_dashboard",
+      "fieldtype": "HTML",
+      "label": "Wallet Overview",
+      "read_only": 1,
+      "description": "Read-only ledger-derived available balance, grants and transactions."
+    },
+    {
+      "fieldname": "wallet_details_section",
+      "fieldtype": "Section Break",
+      "label": "Wallet Details"
+    },
+    {
+      "fieldname": "member",
+      "fieldtype": "Link",
+      "label": "Member",
+      "options": "Club100 Member",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "Currency",
+      "options": "Currency",
+      "reqd": 1,
+      "default": "INR",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Active\nFrozen",
+      "reqd": 1,
+      "default": "Active",
+      "in_list_view": 1,
+      "read_only": 1
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "module": "Club100 Core",
+  "name": "Club100 Wallet",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0,
+      "delete": 0
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1,
+  "title_field": "member",
+  "description": "Container only; spendable balances are computed from individual credit grants and ledger entries."
+}

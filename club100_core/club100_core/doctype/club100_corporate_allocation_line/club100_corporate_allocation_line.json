@@ -1,0 +1,76 @@
+{
+  "doctype": "DocType",
+  "name": "Club100 Corporate Allocation Line",
+  "module": "Club100 Core",
+  "istable": 1,
+  "engine": "InnoDB",
+  "creation": "2026-11-02 00:00:00.000000",
+  "field_order": [
+    "member",
+    "amount",
+    "valid_from",
+    "validity_type",
+    "expires_on",
+    "wallet_grant",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "member",
+      "fieldtype": "Link",
+      "label": "Club100 Member",
+      "options": "Club100 Member",
+      "reqd": 1,
+      "in_list_view": 1,
+      "columns": 3
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Credits (INR)",
+      "reqd": 1,
+      "in_list_view": 1,
+      "columns": 2
+    },
+    {
+      "fieldname": "valid_from",
+      "fieldtype": "Date",
+      "label": "Valid From (Override)",
+      "in_list_view": 1,
+      "columns": 2,
+      "description": "Blank uses batch default"
+    },
+    {
+      "fieldname": "validity_type",
+      "fieldtype": "Select",
+      "label": "Validity (Override)",
+      "options": "\nLifetime\nExpires On",
+      "in_list_view": 1,
+      "columns": 2,
+      "description": "Blank uses batch default"
+    },
+    {
+      "fieldname": "expires_on",
+      "fieldtype": "Date",
+      "label": "Expiry Date (Override)",
+      "description": "Blank uses batch default when Expires On"
+    },
+    {
+      "fieldname": "wallet_grant",
+      "fieldtype": "Link",
+      "label": "Issued Wallet Grant",
+      "options": "Club100 Wallet Grant",
+      "read_only": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Allocation Notes"
+    }
+  ],
+  "permissions": [],
+  "links": [],
+  "actions": [],
+  "states": [],
+  "description": "One corporate employee credit allocation; issued exactly once when the parent batch is submitted."
+}

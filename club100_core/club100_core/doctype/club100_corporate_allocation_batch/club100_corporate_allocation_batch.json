@@ -1,0 +1,99 @@
+{
+  "doctype": "DocType",
+  "name": "Club100 Corporate Allocation Batch",
+  "module": "Club100 Core",
+  "creation": "2026-11-02 00:00:00.000000",
+  "engine": "InnoDB",
+  "autoname": "hash",
+  "is_submittable": 1,
+  "allow_rename": 0,
+  "track_changes": 1,
+  "index_web_pages_for_search": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "title_field": "corporate_pool",
+  "field_order": [
+    "corporate_pool",
+    "corporate_customer",
+    "valid_from",
+    "validity_type",
+    "expires_on",
+    "allocations",
+    "allocation_total",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "corporate_pool",
+      "fieldtype": "Link",
+      "label": "Corporate Credit Pool",
+      "options": "Club100 Corporate Credit Pool",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "corporate_customer",
+      "fieldtype": "Link",
+      "label": "Corporate Customer",
+      "options": "Customer",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "valid_from",
+      "fieldtype": "Date",
+      "label": "Default Valid From",
+      "default": "Today",
+      "reqd": 1
+    },
+    {
+      "fieldname": "validity_type",
+      "fieldtype": "Select",
+      "label": "Default Credit Validity",
+      "options": "Lifetime\nExpires On",
+      "default": "Lifetime",
+      "reqd": 1
+    },
+    {
+      "fieldname": "expires_on",
+      "fieldtype": "Date",
+      "label": "Default Expiry Date (Inclusive)",
+      "depends_on": "eval:doc.validity_type==\"Expires On\""
+    },
+    {
+      "fieldname": "allocations",
+      "fieldtype": "Table",
+      "label": "Employee Allocations",
+      "options": "Club100 Corporate Allocation Line",
+      "reqd": 1
+    },
+    {
+      "fieldname": "allocation_total",
+      "fieldtype": "Currency",
+      "label": "Total Credits To Allocate (INR)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Internal Notes"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1,
+      "submit": 1,
+      "cancel": 0,
+      "delete": 0
+    }
+  ],
+  "links": [],
+  "actions": [],
+  "states": [],
+  "description": "Submit a batch to issue employer-funded credits in one atomic transaction. Grants and ledger entries are generated automatically. Submitted batches cannot be cancelled or edited."
+}

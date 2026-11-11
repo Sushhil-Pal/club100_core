@@ -412,6 +412,7 @@ def register(
     password=None,
     email=None,
     registration_token=None,
+    referral_code=None,
 ):
     """
     Create Club100 app access.
@@ -424,6 +425,9 @@ def register(
     registration_token = (
         registration_token or ""
     ).strip()
+    referral_code = str(referral_code or "").strip().upper()
+    if referral_code and registration_token:
+        frappe.throw("Referral codes must be claimed before paid registration.", frappe.ValidationError)
 
     _validate_password(password)
 
@@ -619,6 +623,12 @@ def register(
             ignore_permissions=True
         )
 
+        if referral_code:
+            from club100_core.referrals.service import capture_referral_from_trusted_flow
+            capture_referral_from_trusted_flow(
+                member.name, referral_code, source="Member PWA"
+            )
+
         _login_user(
             user.name,
             password,
@@ -678,6 +688,19 @@ def register(
     member.insert(
         ignore_permissions=True
     )
+
+    if referral_code:
+        from club100_core.referrals.service import capture_referral_from_trusted_flow
+        capture_referral_from_trusted_flow(
+            member.name, referral_code, source="Member PWA"
+        )
+
+    # Provision billing identity for this newly registered member; preserve
+    # preceding referral-attribution capture and do not affect login.
+    billing_company = frappe.conf.get('club100_accounting_company')
+    if billing_company:
+        from club100_core.accounting.billing_customer import ensure_customer_for_member
+        ensure_customer_for_member(member.name, billing_company)
 
     _login_user(
         user.name,

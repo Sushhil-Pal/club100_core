@@ -64,11 +64,15 @@ def reconcile_pending_payments(dry_run=True, limit=10, min_age_minutes=15, enrol
     if not dry_run and not cint(frappe.conf.get("club100_reconciliation_enabled")):
         frappe.throw("Payment reconciliation is disabled in site configuration.")
 
+    from club100_core.wallet.checkout import expected_gateway_due, member_wallet_lock_before_enrollment, settle_verified_gateway_or_review
     config = _get_razorpay_config()
     results = []
     for row in _candidates(limit, min_age_minutes, enrollment_id=enrollment_id):
         name = row.name
         try:
+            if frappe.db.get_value('Club100 Enrollment', name, 'wallet_settlement_status') == 'Review':
+                results.append({'enrollment': name, 'result': 'wallet_manual_review'})
+                continue
             response = requests.get(
                 f"{RAZORPAY_API_BASE}/orders/{row.payment_order_id}/payments",
                 auth=(config["key_id"], config["key_secret"]),
@@ -87,10 +91,11 @@ def reconcile_pending_payments(dry_run=True, limit=10, min_age_minutes=15, enrol
                 continue
             pay = captured[0]
             pay_id = str(pay.get("id") or "")
+            source = frappe.get_doc('Club100 Enrollment', name)
             valid = (pay_id.startswith("pay_")
                      and str(pay.get("order_id") or "") == row.payment_order_id
                      and pay.get("currency") == "INR"
-                     and cint(pay.get("amount")) == _rupees_to_paise(row.amount_payable))
+                     and cint(pay.get("amount")) == _rupees_to_paise(expected_gateway_due(source)))
             if not valid:
                 results.append({"enrollment": name, "result": "mismatch_manual_review"})
                 continue
@@ -98,12 +103,13 @@ def reconcile_pending_payments(dry_run=True, limit=10, min_age_minutes=15, enrol
                 results.append({"enrollment": name, "result": "would_finalize", "payment_id": pay_id})
                 continue
             # Recheck locked record against a simultaneous browser callback/webhook.
+            member_wallet_lock_before_enrollment(name)
             frappe.db.sql("SELECT name FROM `tabClub100 Enrollment` WHERE name=%s FOR UPDATE", name)
             doc = frappe.get_doc("Club100 Enrollment", name)
             if (doc.website_source != "PWA Commerce" or doc.status != "Registered"
                     or doc.payment_status != "Pending"
                     or str(doc.payment_order_id or "") != row.payment_order_id
-                    or _rupees_to_paise(doc.amount_payable) != cint(pay.get("amount"))):
+                    or _rupees_to_paise(expected_gateway_due(doc)) != cint(pay.get("amount"))):
                 frappe.db.rollback()
                 results.append({"enrollment": name, "result": "changed_skipped"})
                 continue
@@ -111,6 +117,9 @@ def reconcile_pending_payments(dry_run=True, limit=10, min_age_minutes=15, enrol
             if duplicate and duplicate != name:
                 frappe.db.rollback()
                 results.append({"enrollment": name, "result": "duplicate_payment_manual_review"})
+                continue
+            if not settle_verified_gateway_or_review(doc, pay_id):
+                results.append({"enrollment": name, "result": "wallet_manual_review", "payment_id": pay_id})
                 continue
             doc.payment_gateway = "Razorpay"
             doc.payment_id = pay_id

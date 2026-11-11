@@ -1,0 +1,24 @@
+{
+ "doctype": "DocType", "name": "Club100 Hybrid Payment Evidence", "module": "Club100 Core",
+ "autoname": "hash", "engine": "InnoDB", "istable": 0,
+ "description": "Internal test-only immutable verified Razorpay evidence. NOT accounting, settlement, or membership activation.",
+ "field_order": ["enrollment", "hybrid_checkout", "member", "razorpay_order_id", "razorpay_payment_id", "amount_paise", "snapshot_sha256", "identity_sha256", "provider_status", "origin", "state", "review_reason", "verified_on", "evidence_version"],
+ "fields": [
+  {"fieldname":"enrollment","fieldtype":"Link","options":"Club100 Enrollment","label":"Enrollment","reqd":1,"unique":1,"read_only":1},
+  {"fieldname":"hybrid_checkout","fieldtype":"Link","options":"Club100 Hybrid Checkout","label":"Hybrid Checkout","reqd":1,"unique":1,"read_only":1},
+  {"fieldname":"member","fieldtype":"Link","options":"Club100 Member","label":"Member","reqd":1,"read_only":1},
+  {"fieldname":"razorpay_order_id","fieldtype":"Data","label":"Razorpay Order ID","reqd":1,"unique":1,"read_only":1},
+  {"fieldname":"razorpay_payment_id","fieldtype":"Data","label":"Razorpay Payment ID","reqd":1,"unique":1,"read_only":1},
+  {"fieldname":"amount_paise","fieldtype":"Int","label":"Amount in Paise","reqd":1,"read_only":1},
+  {"fieldname":"snapshot_sha256","fieldtype":"Data","label":"Frozen Snapshot SHA256","reqd":1,"read_only":1},
+  {"fieldname":"identity_sha256","fieldtype":"Data","label":"Evidence SHA256","reqd":1,"read_only":1},
+  {"fieldname":"provider_status","fieldtype":"Data","label":"Provider Status","reqd":1,"read_only":1},
+  {"fieldname":"origin","fieldtype":"Select","label":"First Verified Source","options":"Browser\nWebhook","reqd":1,"read_only":1},
+  {"fieldname":"state","fieldtype":"Select","label":"State","options":"Verified Pending Invoice\nManual Review\nSettled","reqd":1,"read_only":1},
+  {"fieldname":"review_reason","fieldtype":"Small Text","label":"Review Reason","read_only":1},
+  {"fieldname":"verified_on","fieldtype":"Datetime","label":"Verified On","reqd":1,"read_only":1},
+  {"fieldname":"evidence_version","fieldtype":"Data","label":"Evidence Version","reqd":1,"read_only":1}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"report":1,"export":1,"create":0,"write":0,"delete":0}],
+ "sort_field":"creation","sort_order":"DESC", "track_changes":1, "index_web_pages_for_search":0
+}

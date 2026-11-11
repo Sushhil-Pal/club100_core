@@ -1,0 +1,118 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "field:partner_code",
+  "creation": "2026-10-29 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "partner_code",
+    "partner_type",
+    "member",
+    "display_name",
+    "status",
+    "partner_category",
+    "contact_email",
+    "approved_by",
+    "approved_on",
+    "agreement_accepted_on",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "partner_code",
+      "fieldtype": "Data",
+      "label": "Referral Code",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1,
+      "description": "Unique public referral code; do not change after it is used."
+    },
+    {
+      "fieldname": "partner_type",
+      "fieldtype": "Select",
+      "label": "Partner Type",
+      "options": "Member Advocate\nAmbassador",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "member",
+      "fieldtype": "Link",
+      "label": "Member (Optional for External Influencers)",
+      "options": "Club100 Member",
+      "unique": 1
+    },
+    {
+      "fieldname": "display_name",
+      "fieldtype": "Data",
+      "label": "Display Name",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Pending\nActive\nSuspended\nClosed",
+      "reqd": 1,
+      "default": "Pending",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "partner_category",
+      "fieldtype": "Select",
+      "label": "Ambassador Category",
+      "options": "\nIndividual\nInfluencer\nCommunity / Society\nOther"
+    },
+    {
+      "fieldname": "contact_email",
+      "fieldtype": "Data",
+      "label": "Contact Email",
+      "options": "Email"
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approved_on",
+      "fieldtype": "Datetime",
+      "label": "Approved On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "agreement_accepted_on",
+      "fieldtype": "Datetime",
+      "label": "Agreement Accepted On"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Internal Notes"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "module": "Club100 Core",
+  "name": "Club100 Referral Partner",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1,
+  "title_field": "display_name"
+}

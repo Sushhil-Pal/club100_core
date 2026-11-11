@@ -117,6 +117,22 @@ def _initialize(member, membership, level="L1"):
     frappe.db.sql("SELECT name FROM `tabClub100 Member` WHERE name=%s FOR UPDATE", member)
     existing = _get(member)
     if existing:
+        # A renewal must retain its fitness level, curriculum, and position.
+        # Only move the provenance pointer once the new paid term is effective.
+        from frappe.utils import getdate, nowdate
+        if (membership.member == member
+                and membership.status == "Active"
+                and membership.payment_status == "Paid"
+                and membership.start_date
+                and getdate(membership.start_date) <= getdate(nowdate())
+                and existing.last_enrollment != membership.name):
+            # Old enrollment save hooks must never move the pointer backwards.
+            last_start = (frappe.db.get_value(
+                "Club100 Enrollment", existing.last_enrollment, "start_date"
+            ) if existing.last_enrollment else None)
+            if not last_start or getdate(membership.start_date) >= getdate(last_start):
+                existing.last_enrollment = membership.name
+                existing.save(ignore_permissions=True)
         return existing
     doc = frappe.get_doc({"doctype": "Club100 Member Training Journey", "member": member,
         "program": membership.program, "track": "Standard", "level_code": level,

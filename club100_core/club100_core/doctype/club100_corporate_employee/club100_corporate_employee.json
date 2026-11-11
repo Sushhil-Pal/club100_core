@@ -1,0 +1,75 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "hash",
+  "creation": "2026-10-30 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "employee_key",
+    "corporate_customer",
+    "member",
+    "status",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "employee_key",
+      "fieldtype": "Data",
+      "label": "Unique Company\u2013Member Key",
+      "unique": 1,
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "corporate_customer",
+      "fieldtype": "Link",
+      "label": "Corporate Customer",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "member",
+      "fieldtype": "Link",
+      "label": "Club100 Member",
+      "options": "Club100 Member",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Active\nInactive",
+      "default": "Active",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Internal Notes"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "module": "Club100 Core",
+  "name": "Club100 Corporate Employee",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 0
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1,
+  "description": "Employee eligibility mapping for corporate benefit allocation, administered through ERPNext Desk."
+}

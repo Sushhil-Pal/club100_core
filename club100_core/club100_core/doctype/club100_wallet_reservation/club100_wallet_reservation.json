@@ -1,0 +1,134 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "hash",
+  "creation": "2026-10-30 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "reservation_key",
+    "member",
+    "wallet",
+    "reference",
+    "total_amount",
+    "currency",
+    "status",
+    "expires_at",
+    "captured_at",
+    "released_at",
+    "refunded_at",
+    "items"
+  ],
+  "fields": [
+    {
+      "fieldname": "reservation_key",
+      "fieldtype": "Data",
+      "label": "Unique Checkout/Reservation Key",
+      "reqd": 1,
+      "unique": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "member",
+      "fieldtype": "Link",
+      "label": "Member",
+      "options": "Club100 Member",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "wallet",
+      "fieldtype": "Link",
+      "label": "Wallet",
+      "options": "Club100 Wallet",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "reference",
+      "fieldtype": "Data",
+      "label": "Business Reference",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "total_amount",
+      "fieldtype": "Currency",
+      "label": "Reserved Amount (INR)",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "Currency",
+      "options": "Currency",
+      "reqd": 1,
+      "default": "INR",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Reserved\nCaptured\nReleased\nExpired\nRefunded",
+      "reqd": 1,
+      "read_only": 1,
+      "default": "Reserved"
+    },
+    {
+      "fieldname": "expires_at",
+      "fieldtype": "Datetime",
+      "label": "Reservation Expiry (Server Time)",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "captured_at",
+      "fieldtype": "Datetime",
+      "label": "Captured At",
+      "read_only": 1
+    },
+    {
+      "fieldname": "released_at",
+      "fieldtype": "Datetime",
+      "label": "Released At",
+      "read_only": 1
+    },
+    {
+      "fieldname": "refunded_at",
+      "fieldtype": "Datetime",
+      "label": "Refunded At",
+      "read_only": 1
+    },
+    {
+      "fieldname": "items",
+      "fieldtype": "Table",
+      "label": "Grant Allocations",
+      "options": "Club100 Wallet Reservation Item",
+      "reqd": 1,
+      "read_only": 1
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "istable": 0,
+  "links": [],
+  "module": "Club100 Core",
+  "name": "Club100 Wallet Reservation",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0,
+      "delete": 0
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1,
+  "description": "Internal-only hold of grant credits; not a checkout API. Status transitions are audit retained."
+}

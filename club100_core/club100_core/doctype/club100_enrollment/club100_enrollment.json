@@ -36,10 +36,17 @@
   "starting_fitness_level",
   "current_fitness_level",
   "status",
+  "referral_snapshot_json",
+  "wallet_reservation_key",
+  "wallet_applied_amount",
+  "gateway_due_amount",
+  "wallet_settlement_status",
+  "wallet_review_reason",
   "payment_status",
   "payment_gateway",
   "payment_order_id",
   "payment_id",
+  "razorpay_capture_verified",
   "payment_date",
   "sales_invoice",
   "website_source",
@@ -317,6 +324,56 @@
    "options": "Club100 Enrollment",
    "read_only": 1,
    "description": "Source trial for paid Self conversion"
+  },
+  {
+   "fieldname": "referral_snapshot_json",
+   "fieldtype": "Long Text",
+   "label": "Reserved Referral Terms (Internal)",
+   "read_only": 1,
+   "hidden": 1,
+   "description": "Server-generated referral-rate snapshot captured before anonymous checkout payment."
+  },
+  {
+   "fieldname": "razorpay_capture_verified",
+   "fieldtype": "Check",
+   "label": "Captured Payment Verified By Razorpay",
+   "default": 0,
+   "read_only": 1,
+   "hidden": 1,
+   "description": "Set only after server verifies Razorpay HMAC/API capture or signed captured webhook; protects referral reward trigger."
+  },
+  {
+   "fieldname": "wallet_reservation_key",
+   "fieldtype": "Data",
+   "label": "Wallet Reservation Key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "wallet_applied_amount",
+   "fieldtype": "Currency",
+   "label": "Wallet Amount Applied",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gateway_due_amount",
+   "fieldtype": "Currency",
+   "label": "Razorpay Amount Due",
+   "read_only": 1
+  },
+  {
+   "fieldname": "wallet_settlement_status",
+   "fieldtype": "Select",
+   "label": "Wallet Settlement Status",
+   "options": "None\nReserved\nSettled\nReview\nRefunded",
+   "default": "None",
+   "read_only": 1
+  },
+  {
+   "fieldname": "wallet_review_reason",
+   "fieldtype": "Small Text",
+   "label": "Wallet Review Reason",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

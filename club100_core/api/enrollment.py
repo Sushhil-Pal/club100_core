@@ -779,6 +779,9 @@ def _finalize_paid_enrollment_doc(
             "Only paid enrollments can be activated."
         )
 
+    from club100_core.wallet.checkout import require_settled_before_finalization
+    require_settled_before_finalization(enrollment)
+
     duration_months = cint(
         enrollment.membership_duration_months
     )
@@ -853,8 +856,36 @@ def _finalize_paid_enrollment_doc(
         ignore_permissions=True
     )
 
+    # Every verified PWA Self purchase MUST reconcile accounting before activation
+    # or referral reward creation. Runs in the caller's DB transaction.
+    if (enrollment.website_source == 'PWA Commerce'
+            and enrollment.pricing_model == 'Online Plan'
+            and not cint(enrollment.is_trial)
+            and frappe.db.get_value('Club100 Plan', enrollment.plan, 'plan_code') == 'self'):
+        from club100_core.accounting.normal_accounting import post_verified
+        accounting_result = post_verified(enrollment.name)
+        # Stage 5E reloads the enrollment as a separate Frappe document and
+        # saves sales_invoice there. Keep this original in-memory document in
+        # sync so the callback/recovery finalizer does not mistake a correctly
+        # posted invoice for a failed settlement and roll everything back.
+        posted_invoice = (accounting_result.get('invoice')
+                          if isinstance(accounting_result, dict) else None)
+        if (not posted_invoice
+                or frappe.db.get_value('Club100 Enrollment', enrollment.name,
+                                       'sales_invoice') != posted_invoice
+                or frappe.db.get_value('Sales Invoice', posted_invoice,
+                                       'docstatus') != 1):
+            raise ValueError('Verified membership accounting invoice not reconciled')
+        enrollment.sales_invoice = posted_invoice
+
     # Payment succeeded: link the original Self trial to this paid order.
     _link_converted_self_trial(enrollment)
+
+    # Both browser verification and signed Razorpay webhook call this same
+    # idempotent finalizer. The referral bridge never changes membership status
+    # and must not block a genuinely captured payment.
+    from club100_core.referrals.payment_rewards import safely_record_verified_payment
+    safely_record_verified_payment(enrollment)
 
     if (
         getattr(
@@ -1005,6 +1036,7 @@ def create_pending_enrollment(
     program=None,
     plan=None,
     duration_months=None,
+    referral_code=None,
 ):
     """
     Create a pending Club100 website enrollment.
@@ -1045,6 +1077,11 @@ def create_pending_enrollment(
         duration_months,
     )
 
+    # Optional referral code is validated and its rates are reserved BEFORE
+    # anonymous checkout. The browser never supplies a financial snapshot.
+    from club100_core.referrals.payment_rewards import reserve_website_referral
+    requested_referral_code = str(referral_code or "").strip().upper()
+
     #
     # Protect against accidental double-clicks / retries.
     #
@@ -1075,6 +1112,10 @@ def create_pending_enrollment(
             "Club100 Enrollment",
             existing[0].name,
         )
+        import json as _json
+        current = _json.loads(enrollment.get("referral_snapshot_json") or "{}")
+        if requested_referral_code and current.get("code") != requested_referral_code:
+            frappe.throw("Referral code cannot change on a pending enrollment. Start a new checkout after the pending window expires.")
 
         return {
             "success": True,
@@ -1095,6 +1136,8 @@ def create_pending_enrollment(
             "payment_status":
                 enrollment.payment_status,
         }
+
+    reserved_referral = reserve_website_referral(requested_referral_code)
 
     enrollment = frappe.get_doc({
         "doctype": "Club100 Enrollment",
@@ -1136,6 +1179,7 @@ def create_pending_enrollment(
 
         "website_source":
             "Website",
+        "referral_snapshot_json": reserved_referral,
     })
 
     enrollment.insert(
@@ -1236,6 +1280,11 @@ def create_payment_order(
             "Enrollment details do not match."
         )
 
+    if (enrollment.wallet_settlement_status == 'Review'
+            or (enrollment.payment_id and enrollment.payment_status != 'Paid')
+            or (cint(enrollment.razorpay_capture_verified) and enrollment.payment_status != 'Paid')):
+        frappe.throw('Captured payment requires financial reconciliation. Do not pay again.')
+
     if enrollment.payment_status == "Paid":
         frappe.throw(
             "This enrollment has already been paid."
@@ -1279,9 +1328,8 @@ def create_payment_order(
             enrollment
         )
 
-    amount_paise = _rupees_to_paise(
-        enrollment.amount_payable
-    )
+    from club100_core.wallet.checkout import before_gateway_order
+    amount_paise = _rupees_to_paise(before_gateway_order(enrollment))
 
     config = _get_razorpay_config()
 
@@ -1300,7 +1348,7 @@ def create_payment_order(
                 enrollment.payment_order_id,
             "amount": amount_paise,
             "amount_rupees":
-                enrollment.amount_payable,
+                str(amount_paise / 100),
             "currency": "INR",
         }
 
@@ -1419,7 +1467,7 @@ def create_payment_order(
         "order_id": order_id,
         "amount": amount_paise,
         "amount_rupees":
-            enrollment.amount_payable,
+            str(amount_paise / 100),
         "currency": "INR",
     }
 
@@ -1482,6 +1530,15 @@ def verify_payment(
             "Club100 Enrollment not found."
         )
 
+    # Stage D2C2C2: route only hybrid enrollments to the evidence-only pilot.
+    # Must precede legacy locks and the Paid => finalize shortcut.
+    from club100_core.accounting.hybrid_callback_bridge import maybe_browser
+    hybrid_pending = maybe_browser(enrollment_id, payment_id, checkout_order_id, signature)
+    if hybrid_pending is not None:
+        return hybrid_pending
+
+    from club100_core.wallet.checkout import member_wallet_lock_before_enrollment
+    member_wallet_lock_before_enrollment(enrollment_id)
     frappe.db.sql(
         """
         SELECT name
@@ -1496,6 +1553,9 @@ def verify_payment(
         "Club100 Enrollment",
         enrollment_id,
     )
+
+    if enrollment.wallet_settlement_status == 'Review':
+        frappe.throw('Payment is under reconciliation. Do not attempt a second payment.')
 
     stored_order_id = str(
         enrollment.payment_order_id or ""
@@ -1514,6 +1574,10 @@ def verify_payment(
         frappe.throw(
             "Razorpay Order ID does not match the enrollment."
         )
+
+    # A late callback must never resurrect an already-refunded membership.
+    if enrollment.payment_status == "Refunded":
+        frappe.throw("Enrollment has been refunded and cannot be reactivated.")
 
     if (
         enrollment.payment_status == "Paid"
@@ -1602,9 +1666,8 @@ def verify_payment(
 
     payment = response.json()
 
-    amount_paise = _rupees_to_paise(
-        enrollment.amount_payable
-    )
+    from club100_core.wallet.checkout import expected_gateway_due
+    amount_paise = _rupees_to_paise(expected_gateway_due(enrollment))
 
     if str(
         payment.get("order_id") or ""
@@ -1686,10 +1749,21 @@ def verify_payment(
             "Razorpay payment has not been captured yet."
         )
 
+    if (enrollment.website_source == 'PWA Commerce'
+            and enrollment.pricing_model == 'Online Plan'
+            and frappe.db.get_value('Club100 Plan', enrollment.plan, 'plan_code') == 'self'):
+        from club100_core.accounting.normal_accounting import finalize_verified_gateway
+        return finalize_verified_gateway(enrollment, payment_id, register=True)
+
+    from club100_core.wallet.checkout import settle_verified_gateway_or_review, review_response
+    if not settle_verified_gateway_or_review(enrollment, payment_id):
+        return review_response(enrollment)
+
     enrollment.payment_gateway = "Razorpay"
     enrollment.payment_id = payment_id
     enrollment.payment_date = now_datetime()
     enrollment.payment_status = "Paid"
+    enrollment.razorpay_capture_verified = 1
 
     #
     # Payment and membership activation are committed together.
@@ -1901,6 +1975,15 @@ def razorpay_webhook(**kwargs):
             "reason": "unknown_order",
         }
 
+    # Stage D2C2C2: signed webhook for a hybrid enrollment is evidence-only.
+    # Do not enter the legacy wallet settlement or enrollment activation path.
+    from club100_core.accounting.hybrid_callback_bridge import maybe_webhook
+    hybrid_pending = maybe_webhook(enrollment_name, raw_body, signature)
+    if hybrid_pending is not None:
+        return {**hybrid_pending, "event_id": event_id or None}
+
+    from club100_core.wallet.checkout import member_wallet_lock_before_enrollment
+    member_wallet_lock_before_enrollment(enrollment_name)
     frappe.db.sql(
         """
         SELECT name
@@ -1925,16 +2008,29 @@ def razorpay_webhook(**kwargs):
             "Razorpay webhook order does not match the enrollment."
         )
 
-    expected_amount = _rupees_to_paise(
-        enrollment.amount_payable
-    )
+    from club100_core.wallet.checkout import expected_gateway_due
+    expected_amount = _rupees_to_paise(expected_gateway_due(enrollment))
 
     if amount_paise != expected_amount:
         frappe.throw(
             "Razorpay webhook amount does not match the enrollment."
         )
 
+    if enrollment.wallet_settlement_status == 'Review':
+        return {'success': True, 'manual_review': True, 'enrollment': enrollment.name,
+                'event_id': event_id or None, 'do_not_retry_payment': True,
+                'message': 'Captured payment awaiting accounting reconciliation'}
+
     #
+    # After a full refund, acknowledge late payment.captured deliveries without
+    # changing membership or wallet financial state.
+    if enrollment.payment_status == "Refunded":
+        return {
+            "success": True, "ignored": True, "source": "webhook",
+            "event": event_name, "event_id": event_id or None,
+            "enrollment": enrollment.name, "reason": "already_refunded",
+        }
+
     # Duplicate deliveries are normal. Also, the browser verification
     # can reach ERP before the webhook. In both cases simply ensure the
     # membership is finalized and return 2xx.
@@ -2004,12 +2100,24 @@ def razorpay_webhook(**kwargs):
             f"{enrollment.payment_status}; expected Pending."
         )
 
+    if (enrollment.website_source == 'PWA Commerce'
+            and enrollment.pricing_model == 'Online Plan'
+            and frappe.db.get_value('Club100 Plan', enrollment.plan, 'plan_code') == 'self'):
+        from club100_core.accounting.normal_accounting import finalize_verified_gateway
+        return {**finalize_verified_gateway(enrollment, payment_id, register=False),
+                'source':'webhook', 'event_id':event_id or None}
+
+    from club100_core.wallet.checkout import settle_verified_gateway_or_review, review_response
+    if not settle_verified_gateway_or_review(enrollment, payment_id):
+        return {**review_response(enrollment), "source": "webhook", "event_id": event_id or None}
+
     enrollment.payment_gateway = "Razorpay"
     enrollment.payment_id = payment_id
     enrollment.payment_date = (
         now_datetime()
     )
     enrollment.payment_status = "Paid"
+    enrollment.razorpay_capture_verified = 1
 
     activation = (
         _finalize_paid_enrollment_doc(

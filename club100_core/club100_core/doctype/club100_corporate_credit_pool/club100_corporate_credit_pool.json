@@ -1,0 +1,121 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "hash",
+  "creation": "2026-10-30 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "funding_event_key",
+    "corporate_customer",
+    "funding_reference",
+    "amount",
+    "currency",
+    "funding_verified",
+    "verified_by",
+    "verified_at",
+    "status",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "funding_event_key",
+      "fieldtype": "Data",
+      "label": "Unique Funding Reference",
+      "reqd": 0,
+      "unique": 1,
+      "in_list_view": 1,
+      "description": "Internal key generated from company and verified payment reference; prevents duplicate funding tranches.",
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "corporate_customer",
+      "fieldtype": "Link",
+      "label": "Corporate Customer",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "funding_reference",
+      "fieldtype": "Data",
+      "label": "Verified Payment / Invoice Reference",
+      "reqd": 1,
+      "description": "Use the unique employer receipt reference (Payment Entry Reference No.). Matching a bank receipt does not substitute for bank statement reconciliation."
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Confirmed Funded Amount (INR)",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "Currency",
+      "options": "Currency",
+      "default": "INR",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "funding_verified",
+      "fieldtype": "Check",
+      "label": "Funding Verified by Finance",
+      "default": 0,
+      "reqd": 1,
+      "description": "Set automatically by Confirm Funding after GL posting; not an allocation permission by itself.",
+      "read_only": 1
+    },
+    {
+      "fieldname": "verified_by",
+      "fieldtype": "Link",
+      "label": "Verified By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "verified_at",
+      "fieldtype": "Datetime",
+      "label": "Verified At",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Awaiting Funding\nFunded",
+      "default": "Awaiting Funding",
+      "reqd": 1,
+      "read_only": 1,
+      "description": "Funding is confirmed only after validated employer receipt, liability Journal Entry and immutable source event are posted."
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Internal Notes"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "module": "Club100 Core",
+  "name": "Club100 Corporate Credit Pool",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 0
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1,
+  "description": "Create an awaiting-funding pool, record employer receipt in ERPNext, then use Confirm Funding to post wallet liability. Allocate only after GL-backed confirmation."
+}

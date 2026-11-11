@@ -1,0 +1,97 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "autoname": "field:policy_code",
+  "creation": "2026-10-29 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "policy_code",
+    "reward_track",
+    "enabled",
+    "first_purchase_rate",
+    "renewal_rate",
+    "currency",
+    "minimum_duration_months",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "policy_code",
+      "fieldtype": "Data",
+      "label": "Policy Code",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "reward_track",
+      "fieldtype": "Select",
+      "label": "Reward Track",
+      "options": "Member Credit\nAmbassador Cash",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "label": "Enabled",
+      "default": 0,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "first_purchase_rate",
+      "fieldtype": "Percent",
+      "label": "First Purchase (%)",
+      "default": 0,
+      "reqd": 1
+    },
+    {
+      "fieldname": "renewal_rate",
+      "fieldtype": "Percent",
+      "label": "Renewal (%)",
+      "default": 0,
+      "reqd": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "Currency",
+      "options": "Currency",
+      "default": "INR",
+      "reqd": 1
+    },
+    {
+      "fieldname": "minimum_duration_months",
+      "fieldtype": "Int",
+      "label": "Minimum Purchase Duration (Months)",
+      "default": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Terms / Operational Notes"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "module": "Club100 Core",
+  "name": "Club100 Referral Policy",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1,
+  "title_field": "policy_code"
+}

@@ -263,8 +263,14 @@ app_license = "mit"
 # ignore_translatable_strings_from = []
 
 scheduler_events = {
-    "daily": ["club100_core.api.commerce_checkout.activate_due_memberships"],
-    "hourly": ["club100_core.api.payment_reconciliation.scheduled_reconcile_payments"],
+    "daily": [
+        "club100_core.api.commerce_checkout.activate_due_memberships",
+        "club100_core.referrals.settlement.scheduled_mature_referral_rewards",
+    ],
+    "hourly": [
+        "club100_core.api.payment_reconciliation.scheduled_reconcile_payments",
+        "club100_core.accounting.settlement.scheduled_reconcile_membership_invoices",
+    ],
     "cron": {
         "*/5 * * * *": [
             "club100_core.api.session_notifications.process_session_reminders",
