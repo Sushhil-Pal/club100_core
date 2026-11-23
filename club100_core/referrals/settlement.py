@@ -24,8 +24,12 @@ REFERRAL_KEY_PREFIX = 'REFERRAL:REWARD:'
 
 
 def _enabled():
-    return (frappe.local.site == 'club100.local'
-            and str(frappe.conf.get('razorpay_mode') or 'test').lower() == 'test')
+    """Referral engine is available by default; each policy still controls eligibility.
+
+    Payment provenance, approval, hold, refund and partner checks stay in the
+    reward lifecycle, and cash payout is never automatic.
+    """
+    return True
 
 
 def _require_pilot():

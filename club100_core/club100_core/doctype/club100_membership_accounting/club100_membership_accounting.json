@@ -9,6 +9,7 @@
     "enrollment",
     "member",
     "customer",
+    "billing_item",
     "sales_invoice",
     "gateway_payment_entry",
     "wallet_journal_entry",
@@ -48,6 +49,14 @@
       "options": "Customer",
       "reqd": 1,
       "read_only": 1
+    },
+    {
+      "fieldname": "billing_item",
+      "fieldtype": "Link",
+      "label": "Billed Membership Item",
+      "options": "Item",
+      "read_only": 1,
+      "description": "Snapshot of the ERPNext Item used on the original posted Sales Invoice."
     },
     {
       "fieldname": "sales_invoice",

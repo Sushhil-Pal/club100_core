@@ -25,6 +25,8 @@
   "society_pricing_tier_snapshot",
   "society_pricing_member_count_snapshot",
   "pricing_snapshot_on",
+  "training_onboarding_status",
+  "training_onboarding_completed_on",
   "cohort",
   "society",
   "society_interest",
@@ -373,6 +375,20 @@
    "fieldname": "wallet_review_reason",
    "fieldtype": "Small Text",
    "label": "Wallet Review Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "training_onboarding_status",
+   "fieldtype": "Select",
+   "label": "Training Onboarding",
+   "options": "Pending\nIn Progress\nCompleted",
+   "description": "Trainer-led purchases start Pending. Complete using the Club100 training onboarding action; member profile onboarding is separate.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "training_onboarding_completed_on",
+   "fieldtype": "Datetime",
+   "label": "Training Onboarding Completed On",
    "read_only": 1
   }
  ],

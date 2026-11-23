@@ -15,6 +15,7 @@
   "assessment_mode",
   "workout_access_after_minutes",
   "self_workouts_per_week",
+  "membership_item",
   "short_description",
   "display_order",
   "publish_to_website",
@@ -82,6 +83,13 @@
    "fieldtype": "Int",
    "label": "Self Workouts Per Week",
    "description": "Required number of distinct weekly workout days for Self members."
+  },
+  {
+   "fieldname": "membership_item",
+   "fieldtype": "Link",
+   "label": "Membership Item",
+   "options": "Item",
+   "description": "Non-stock, enabled sales Item used to invoice this plan. Required before paid online checkout."
   },
   {
    "fieldname": "short_description",

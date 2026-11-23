@@ -61,8 +61,6 @@ def reconcile_pending_payments(dry_run=True, limit=10, min_age_minutes=15, enrol
             frappe.throw("Enrollment ID is too long.")
         # A manual operation handles a single record, never a batch.
         limit = 1
-    if not dry_run and not cint(frappe.conf.get("club100_reconciliation_enabled")):
-        frappe.throw("Payment reconciliation is disabled in site configuration.")
 
     from club100_core.wallet.checkout import expected_gateway_due, member_wallet_lock_before_enrollment, settle_verified_gateway_or_review
     config = _get_razorpay_config()
@@ -118,16 +116,15 @@ def reconcile_pending_payments(dry_run=True, limit=10, min_age_minutes=15, enrol
                 frappe.db.rollback()
                 results.append({"enrollment": name, "result": "duplicate_payment_manual_review"})
                 continue
-            if not settle_verified_gateway_or_review(doc, pay_id):
-                results.append({"enrollment": name, "result": "wallet_manual_review", "payment_id": pay_id})
-                continue
-            doc.payment_gateway = "Razorpay"
-            doc.payment_id = pay_id
-            doc.payment_date = now_datetime()
-            doc.payment_status = "Paid"
-            _finalize_paid_enrollment_doc(doc, issue_registration_token=False)
-            frappe.db.commit()
-            results.append({"enrollment": name, "result": "finalized", "payment_id": pay_id})
+            # Route recovered captures through the exact same accounting-aware,
+            # no-retry finalizer as the verified browser/webhook checkout path.
+            # It settles wallet tenders, posts accounting before entitlement,
+            # and handles provider-captured failures through Manual Review.
+            from club100_core.accounting.normal_accounting import finalize_verified_gateway
+            outcome = finalize_verified_gateway(doc, pay_id, register=False)
+            results.append({"enrollment": name,
+                            "result": "finalized" if outcome.get("success") else "manual_review",
+                            "payment_id": pay_id})
         except Exception:
             frappe.db.rollback()
             frappe.log_error(frappe.get_traceback(), "Club100 Razorpay Reconciliation")
@@ -137,7 +134,5 @@ def reconcile_pending_payments(dry_run=True, limit=10, min_age_minutes=15, enrol
 
 
 def scheduled_reconcile_payments():
-    """Hourly hook is inert until explicitly enabled by site configuration."""
-    if not cint(frappe.conf.get("club100_reconciliation_enabled")):
-        return {"skipped": "disabled"}
+    """Hourly recovery using verified Razorpay capture and accounting-aware finalizer."""
     return reconcile_pending_payments(dry_run=False, limit=10, min_age_minutes=15)

@@ -844,24 +844,35 @@ def _finalize_paid_enrollment_doc(
 
     enrollment.start_date = start_date
     enrollment.end_date = end_date
-    # Preserve prepaid future membership dates and do not grant access early.
-    enrollment.status = (
-        "Scheduled"
-        if enrollment.website_source == "PWA Commerce"
-        and getdate(start_date) > getdate(nowdate())
-        else "Active"
-    )
+    # Paid trainer-led purchases are financially settled immediately, but training
+    # validity starts only after manual cohort/session onboarding. Keep dates unset
+    # until the first actual scheduled session is confirmed by an administrator.
+    plan_code = (frappe.db.get_value('Club100 Plan', enrollment.plan, 'plan_code')
+                 if enrollment.plan else None)
+    trainer_led = (enrollment.website_source == 'PWA Commerce'
+                   and enrollment.pricing_model == 'Online Plan'
+                   and not cint(enrollment.is_trial)
+                   and plan_code in ('group', 'group-plus', 'focus', 'coach'))
+    if trainer_led:
+        enrollment.start_date = None
+        enrollment.end_date = None
+        enrollment.status = 'Scheduled'
+        enrollment.training_onboarding_status = 'Pending'
+    else:
+        enrollment.status = (
+            'Scheduled' if enrollment.website_source == 'PWA Commerce'
+            and getdate(start_date) > getdate(nowdate()) else 'Active'
+        )
 
     enrollment.save(
         ignore_permissions=True
     )
 
-    # Every verified PWA Self purchase MUST reconcile accounting before activation
-    # or referral reward creation. Runs in the caller's DB transaction.
+    # Every verified nontrial PWA online purchase requires settled accounting.
+    # The accounting engine independently validates plan and server pricing.
     if (enrollment.website_source == 'PWA Commerce'
             and enrollment.pricing_model == 'Online Plan'
-            and not cint(enrollment.is_trial)
-            and frappe.db.get_value('Club100 Plan', enrollment.plan, 'plan_code') == 'self'):
+            and not cint(enrollment.is_trial)):
         from club100_core.accounting.normal_accounting import post_verified
         accounting_result = post_verified(enrollment.name)
         # Stage 5E reloads the enrollment as a separate Frappe document and

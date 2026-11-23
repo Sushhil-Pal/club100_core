@@ -16,29 +16,54 @@ def _member_locked():
     return member
 
 
-def _self_plan():
-    plan = frappe.db.get_value("Club100 Plan", {"plan_code": "self", "status": "Active"}, "name")
+ONLINE_PLANS = ("self", "group", "group-plus", "focus", "coach")
+
+
+def _online_plan(plan_key="self"):
+    plan_key = str(plan_key or "self").strip().lower()
+    if plan_key not in ONLINE_PLANS:
+        frappe.throw("Unsupported Club100 online membership plan.")
+
+    plan = frappe.db.get_value(
+        "Club100 Plan",
+        {"plan_code": plan_key, "status": "Active"},
+        "name",
+    )
     if not plan:
-        frappe.throw("The Self membership is not available.")
+        frappe.throw("The selected Club100 membership is not available.")
     return plan
 
 
-def _quote(member, program, months):
+def _require_plan_billing_item(plan_name):
+    # Run before creating any new payment order or capturing wallet-only tender.
+    from club100_core.accounting.settlement import membership_item_for_plan
+    return membership_item_for_plan(plan_name)
+
+
+def _self_plan():
+    return _online_plan("self")
+
+
+def _quote(member, program, months, plan_key="self"):
     program = str(program or "").strip()
     if not frappe.db.exists("Club100 Program", program):
         frappe.throw("Select a valid Club100 fitness program.")
-    # Paid Self activation initializes a Standard L1 (Core) training journey.
-    # Reject unavailable programs BEFORE creating an order or taking payment.
-    if not frappe.db.exists("Club100 Program Curriculum", {
+    plan_key = str(plan_key or "self").strip().lower()
+    plan = _online_plan(plan_key)
+    _require_plan_billing_item(plan)
+
+    # Self requires an active Standard/Core curriculum.
+    # Trainer-led plans have separate delivery prerequisites.
+    if plan_key == "self" and not frappe.db.exists("Club100 Program Curriculum", {
         "program": program, "track": "Standard", "level_code": "L1", "active": 1,
     }):
         frappe.throw("Self checkout is unavailable for this program: configure an active Standard/Core curriculum first.")
     months = cint(months)
-    price = _get_price("self", months)
-    plan = _self_plan()
+    price = _get_price(plan_key, months)
     today = getdate(nowdate())
-    trials = frappe.get_all("Club100 Enrollment", filters={"member": member.name,
+    trials = (frappe.get_all("Club100 Enrollment", filters={"member": member.name,
          "program": program, "is_trial": 1}, fields=["name","end_date"], order_by="creation desc",limit=1)
+         if plan_key == "self" else [])
     trial = trials[0] if trials else None
     start = add_days(getdate(trial.end_date),1) if trial and trial.end_date and getdate(trial.end_date)>=today else today
     # Permit precisely one advance renewal of an existing paid Self membership.
@@ -51,7 +76,7 @@ def _quote(member, program, months):
     active_paid = []
     for row in existing:
         if row.status == "Registered":
-            frappe.throw("An unfinished Self checkout exists for this program. Resume or resolve that checkout first.")
+            frappe.throw("An unfinished checkout exists for this plan and program. Resume or resolve that checkout first.")
         if row.status == "On Hold":
             frappe.throw("An On Hold membership exists. Contact Club100 support before renewing.")
         if row.status == "Scheduled":
@@ -67,30 +92,31 @@ def _quote(member, program, months):
         frappe.throw("Multiple active memberships found. Resolve overlapping memberships before renewal.")
     if active_paid:
         start = max(getdate(start), add_days(getdate(active_paid[0].end_date), 1))
-    return {"program":program,"plan":plan,"start":start,"trial":trial,"price":price}
+    return {"program":program,"plan":plan,"plan_key":plan_key,
+            "start":start,"trial":trial,"price":price}
 
 
 @frappe.whitelist(methods=["GET"])
-def checkout_quote(program=None, duration_months=None):
+def checkout_quote(program=None, duration_months=None, plan_key="self"):
     member = _get_current_member()
     if member.status != "Active" or member.onboarding_status != "Completed":
         frappe.throw("Complete your Club100 profile first.")
-    data = _quote(member,program,duration_months)
-    return {"program":data["program"],"durationMonths":cint(duration_months),
+    data = _quote(member,program,duration_months,plan_key)
+    return {"program":data["program"],"planCode":data["plan_key"],"durationMonths":cint(duration_months),
        "monthlyEquivalent":data["price"]["monthly_equivalent"],
        "amountPayable":data["price"]["amount_payable"],"currency":"INR",
-       "paidStartDate":str(data["start"]),
+       "paidStartDate":(str(data['start']) if data['plan_key']=='self' else None),
        "trialEnrollmentId":data["trial"].name if data["trial"] else None,
        "wallet": wallet_checkout.preview(member.name, data["price"]["amount_payable"])}
 
 
 @frappe.whitelist(methods=["GET"])
-def member_checkout_state(program=None):
+def member_checkout_state(program=None, plan_key="self"):
     """Read-only, member-owned recovery status; no client-provided enrollment IDs."""
     member = _get_current_member()
     if not program or not frappe.db.exists("Club100 Program", program):
         frappe.throw("Select a valid Club100 fitness program.")
-    plan = _self_plan()
+    plan = _online_plan(plan_key)
     rows = frappe.get_all("Club100 Enrollment", filters={
         "member": member.name, "program": program, "plan": plan,
         "website_source": "PWA Commerce", "is_trial": 0,
@@ -134,6 +160,8 @@ def resume_member_checkout(enrollment_id=None):
     from club100_core.accounting.billing_customer import ensure_customer_for_member
     from club100_core.accounting.settlement import _config
     ensure_customer_for_member(member.name, _config()['company'])
+    # A pending order must not be resumed under an invalid/missing billing Item.
+    _require_plan_billing_item(frappe.db.get_value('Club100 Enrollment', str(enrollment_id), 'plan'))
     row_wallet = frappe.db.get_value("Club100 Enrollment", str(enrollment_id), "wallet_settlement_status")
     if row_wallet == "Review":
         frappe.throw("Captured payment requires manual wallet settlement review. Do not retry.")
@@ -143,7 +171,7 @@ def resume_member_checkout(enrollment_id=None):
 
 
 @frappe.whitelist(methods=["POST"])
-def create_member_checkout(program=None, duration_months=None, wallet_amount=None):
+def create_member_checkout(program=None, duration_months=None, wallet_amount=None, plan_key="self"):
     member = _member_locked()
     # Billing party must exist before creating a gateway order or wallet-only receipt.
     from club100_core.accounting.billing_customer import ensure_customer_for_member
@@ -152,7 +180,8 @@ def create_member_checkout(program=None, duration_months=None, wallet_amount=Non
     requested = money(wallet_amount or 0)
     if requested > 0:
         wallet_checkout.require_enabled()
-    plan = _self_plan()
+    plan = _online_plan(plan_key)
+    _require_plan_billing_item(plan)
     pending = frappe.get_all("Club100 Enrollment", filters={
         "member":member.name,"program":str(program or ""),"plan":plan,
         "website_source":"PWA Commerce", "is_trial":0,
@@ -172,7 +201,7 @@ def create_member_checkout(program=None, duration_months=None, wallet_amount=Non
         order=create_payment_order(old.name,old.mobile,old.email)
         return {**order,"paidStartDate":str(old.start_date),
             "durationMonths":cint(old.membership_duration_months),"program":program}
-    data = _quote(member,program,duration_months)
+    data = _quote(member,program,duration_months,plan_key)
     price = data["price"]
     # This record is the durable checkout/order receipt. It has no entitlement
     # while Registered / Pending, and cannot be made Active until paid.
@@ -239,8 +268,18 @@ def activate_due_memberships():
         doc = frappe.get_doc("Club100 Enrollment", name)
         if (doc.status != "Scheduled" or doc.payment_status != "Paid"
                 or doc.website_source != "PWA Commerce"
-                or getdate(doc.start_date) > today):
+                or not doc.start_date or getdate(doc.start_date) > today):
             continue
+        code = frappe.db.get_value('Club100 Plan', doc.plan, 'plan_code') if doc.plan else None
+        if code in ('group', 'group-plus', 'focus', 'coach'):
+            if (doc.get('training_onboarding_status') != 'Completed'
+                    or not doc.cohort or not doc.end_date):
+                continue
+            if not frappe.db.exists('Club100 Session', {
+                'cohort': doc.cohort, 'session_date': doc.start_date,
+                'status': ['in', ['Scheduled', 'Live', 'Completed']]
+            }):
+                continue
         # The previous subscription may still be marked Active even though
         # its end date has passed. Close it before activating the renewal so
         # downstream membership selectors cannot see two Active rows.

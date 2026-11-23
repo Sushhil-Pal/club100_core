@@ -264,13 +264,17 @@ def _get_self_assessment_membership(member, enrollment_id=None):
         "Club100 Enrollment",
         filters={
             "member": member.name,
-            "status": "Active",
+            "status": ["in", ["Active", "Scheduled"]],
         },
         fields=[
             "name",
             "program",
             "plan",
             "pricing_model",
+            "website_source",
+            "payment_status",
+            "training_onboarding_status",
+            "status",
             "start_date",
             "end_date",
             "membership_duration_months",
@@ -283,23 +287,44 @@ def _get_self_assessment_membership(member, enrollment_id=None):
     )
 
     if enrollment_id:
-        from club100_core.api.memberships import resolve_active_enrollment
-        selected = resolve_active_enrollment(member.name, enrollment_id)
-        enrollments = [row for row in enrollments if row.name == selected.name]
+        # Check ownership before selecting an enrollment, including Scheduled.
+        # Do not change the Active-only resolver used by workout/session APIs.
+        owner = frappe.db.get_value("Club100 Enrollment", enrollment_id, "member")
+        if owner != member.name:
+            frappe.throw(
+                "Membership is unavailable or does not belong to this member.",
+                frappe.PermissionError,
+            )
+        enrollments = [row for row in enrollments if row.name == enrollment_id]
 
     for enrollment in enrollments:
-        # Active, date-valid membership is already owner-checked above.
-        # Assessment eligibility is program-based, not delivery-mode-based.
-        if (
-            enrollment.start_date
-            and frappe.utils.getdate(enrollment.start_date) > today
-        ):
-            continue
-        if (
-            enrollment.end_date
-            and frappe.utils.getdate(enrollment.end_date) < today
-        ):
-            continue
+        if enrollment.status == "Scheduled":
+            # Paid trainer-led onboarding may include a baseline assessment.
+            # Scheduled Self/other memberships remain ineligible here.
+            if not (
+                enrollment.payment_status == "Paid"
+                and enrollment.website_source == "PWA Commerce"
+                and enrollment.pricing_model == "Online Plan"
+                and enrollment.training_onboarding_status in
+                    ("Pending", "In Progress", "Completed")
+                and enrollment.plan
+                and frappe.db.get_value(
+                    "Club100 Plan", enrollment.plan, "plan_code"
+                ) in ("group", "group-plus", "focus", "coach")
+            ):
+                continue
+        else:
+            # Preserve existing Active membership date eligibility.
+            if (
+                enrollment.start_date
+                and frappe.utils.getdate(enrollment.start_date) > today
+            ):
+                continue
+            if (
+                enrollment.end_date
+                and frappe.utils.getdate(enrollment.end_date) < today
+            ):
+                continue
 
         plan = (
             frappe.db.get_value(
@@ -488,7 +513,7 @@ def _resolve_self_assessment_context(member, enrollment_id=None):
             interval_months
         ),
         "enrollment": ({
-            "id": enrollment.name, "status": "Active",
+            "id": enrollment.name, "status": enrollment.status,
             "startDate": enrollment.start_date, "endDate": enrollment.end_date,
             "durationMonths": enrollment.membership_duration_months,
             "pricingModel": enrollment.pricing_model,
@@ -1250,13 +1275,29 @@ def schedule(enrollment_id=None):
     enrollment_rows = frappe.get_all(
         "Club100 Enrollment",
         filters={"member": member.name, "status": ["!=", "Cancelled"]},
-        fields=["name", "program", "plan", "cohort", "start_date", "end_date", "status"],
+        fields=["name", "program", "plan", "cohort", "start_date", "end_date", "status",
+                "payment_status", "training_onboarding_status"],
         order_by="start_date asc",
     )
     if enrollment_id:
-        from club100_core.api.memberships import resolve_active_enrollment
-        selected = resolve_active_enrollment(member.name, enrollment_id)
-        enrollment_rows = [e for e in enrollment_rows if e.name == selected.name]
+        # Resolve ownership first. Scheduled trainer-led enrollments are visible for
+        # schedule preview, but are NOT active training entitlements.
+        selected = next((e for e in enrollment_rows if e.name == enrollment_id), None)
+        if not selected:
+            frappe.throw("Membership is unavailable or does not belong to this member.", frappe.PermissionError)
+        if selected.status == "Active":
+            from club100_core.api.memberships import resolve_active_enrollment
+            resolve_active_enrollment(member.name, enrollment_id)
+        elif selected.status == "Scheduled":
+            code = frappe.db.get_value("Club100 Plan", selected.plan, "plan_code") if selected.plan else None
+            if (selected.payment_status != "Paid"
+                    or code not in ("group", "group-plus", "focus", "coach")):
+                frappe.throw("Membership is not eligible for schedule preview.", frappe.PermissionError)
+            if selected.training_onboarding_status != "Completed" or not selected.cohort:
+                return {"upcoming": [], "past": []}
+        else:
+            frappe.throw("Membership is unavailable for schedule preview.", frappe.PermissionError)
+        enrollment_rows = [selected]
 
     cohort_ids = list({e.cohort for e in enrollment_rows if e.cohort})
     if not cohort_ids:
@@ -1325,6 +1366,13 @@ def schedule(enrollment_id=None):
             continue
         cohort = cohorts_by_id.get(row.cohort)
         attendance = attendance_by_session.get(row.name)
+        session_day = frappe.utils.getdate(row.session_date)
+        active_for_session = any(
+            e.status == "Active" and e.cohort == row.cohort
+            and (not e.start_date or frappe.utils.getdate(e.start_date) <= session_day)
+            and (not e.end_date or frappe.utils.getdate(e.end_date) >= session_day)
+            for e in enrollment_rows
+        )
         item = {
             "id": row.name,
             "sessionType": "Trainer Led",
@@ -1351,9 +1399,10 @@ def schedule(enrollment_id=None):
             "deliveryMode": row.delivery_mode,
             "status": row.status,
             "meetingProvider": row.meeting_provider,
-            # Preserve current schedule API behavior; detail API gates joining until Live.
-            "meetingUrl": row.meeting_url,
-            "notes": row.notes,
+            # Schedule preview must not disclose meeting links or private notes
+            # before an Active enrollment grants this session access.
+            "meetingUrl": row.meeting_url if active_for_session else None,
+            "notes": row.notes if active_for_session else None,
             "attendance": {
                 "status": attendance.attendance_status,
                 "minutesAttended": attendance.minutes_attended,

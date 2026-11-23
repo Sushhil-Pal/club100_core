@@ -18,8 +18,6 @@ def _desk_actor():
     if (actor == 'Guest' or
         (actor != 'Administrator' and 'System Manager' not in frappe.get_roles(actor))):
         frappe.throw('Only a System Manager can confirm corporate funding.', frappe.PermissionError)
-    if not _local_pilot():
-        frappe.throw('Corporate posting is restricted to club100.local / Razorpay Test Mode.', frappe.PermissionError)
     return actor
 
 

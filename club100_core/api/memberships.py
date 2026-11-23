@@ -24,6 +24,23 @@ def _active_memberships(member_name):
     return valid
 
 
+def _visible_memberships(member_name):
+    """Active access plus paid trainer-led onboarding/scheduled purchases for display."""
+    active = _active_memberships(member_name)
+    ids = {r.name for r in active}
+    scheduled = frappe.get_all('Club100 Enrollment', filters={
+        'member': member_name, 'status': 'Scheduled', 'payment_status': 'Paid',
+        'website_source': 'PWA Commerce', 'pricing_model': 'Online Plan',
+    }, fields=['name', 'member', 'program', 'plan', 'pricing_model', 'cohort',
+               'status', 'start_date', 'end_date', 'is_trial', 'trial_status',
+               'training_onboarding_status'], order_by='creation desc')
+    for row in scheduled:
+        code = frappe.db.get_value('Club100 Plan', row.plan, 'plan_code') if row.plan else None
+        if code in ('group', 'group-plus', 'focus', 'coach') and row.name not in ids:
+            active.append(row)
+    return active
+
+
 def resolve_active_enrollment(member_name, enrollment_id):
     """Deny access unless the requested enrollment belongs to this member and is valid."""
     if not enrollment_id or not isinstance(enrollment_id, str):
@@ -38,7 +55,7 @@ def resolve_active_enrollment(member_name, enrollment_id):
 def get_my_enrollments():
     member = _get_current_member()
     result = []
-    for row in _active_memberships(member.name):
+    for row in _visible_memberships(member.name):
         plan_code = (frappe.db.get_value("Club100 Plan", row.plan, "plan_code")
                      if row.plan else None)
         result.append({
@@ -49,6 +66,7 @@ def get_my_enrollments():
             "pricingModel": row.pricing_model,
             "cohortId": row.cohort,
             "status": row.status,
+            "trainingOnboardingStatus": row.get('training_onboarding_status') or None,
             "isTrial": bool(row.is_trial),
             "trialStatus": row.trial_status if row.is_trial else None,
             "startDate": str(row.start_date) if row.start_date else None,

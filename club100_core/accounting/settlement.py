@@ -23,7 +23,6 @@ from club100_core.accounting.rules import money, breakdown, invoice_integrity
 CONFIG_KEYS = {
     'company': 'club100_accounting_company',
     'customer': 'club100_accounting_test_customer',
-    'item': 'club100_accounting_self_item',
     'tax_template': 'club100_accounting_inclusive_tax_template',
     'razorpay_clearing': 'club100_accounting_razorpay_clearing_account',
     'Corporate': 'club100_accounting_corporate_liability_account',
@@ -44,8 +43,13 @@ def _local_pilot():
 
 
 def _post_allowed():
-    # Accounting runs by default for verified local TEST checkouts; no feature flag.
-    return _local_pilot()
+    """No operational feature toggle. Posting eligibility is per transaction.
+
+    post_one additionally requires trusted internal checkout context or a
+    privileged finance actor; payment proof, accounting configuration and
+    wallet backing are mandatory and independently validated.
+    """
+    return True
 
 
 def _config():
@@ -59,6 +63,27 @@ def _company_check(kind, name, company):
         row = frappe.db.get_value('Account', name, ['company', 'is_group', 'disabled'], as_dict=True)
         if not row or row.company != company or cint(row.is_group) or cint(row.disabled):
             raise ValueError('Account must be enabled, non-group, and belong to configured Company: ' + name)
+
+
+def validate_membership_item(item_code):
+    """Validate an invoiceable service Item; fail closed, never use the Self fallback."""
+    code = str(item_code or '').strip()
+    if not code:
+        raise ValueError('Club100 Plan has no Membership Item configured')
+    item = frappe.db.get_value('Item', code,
+        ['name', 'disabled', 'is_stock_item', 'is_sales_item', 'has_variants'], as_dict=True)
+    if not item:
+        raise ValueError('Club100 membership Item does not exist: ' + code)
+    if (cint(item.disabled) or cint(item.is_stock_item)
+            or not cint(item.is_sales_item) or cint(item.has_variants)):
+        raise ValueError('Club100 membership Item must be enabled, non-stock, sellable, and not a template: ' + code)
+    return item.name
+
+
+def membership_item_for_plan(plan_name):
+    """Resolve the Item from the authoritative Club100 Plan, not site defaults."""
+    code = frappe.db.get_value('Club100 Plan', str(plan_name or ''), 'membership_item')
+    return validate_membership_item(code)
 
 
 def _tax_rows(template_name, company):
@@ -113,9 +138,10 @@ def _require_wallet_liability_backing(cfg, amounts, allocations=None):
 def _ready(cfg, sources, gateway):
     _company_check('Company', cfg['company'], cfg['company'])
     _company_check('Customer', cfg['customer'], cfg['company'])
-    _company_check('Item', cfg['item'], cfg['company'])
-    if frappe.db.get_value('Item', cfg['item'], 'is_stock_item'):
-        raise ValueError('Membership billing Item must be a non-stock service')
+    # Funding/wallet reservation checks can use generic accounting configuration.
+    # Invoice posting and checkout preflight validate the plan-linked Item separately.
+    if cfg.get('item'):
+        validate_membership_item(cfg['item'])
     if frappe.db.get_value('Customer', cfg['customer'], 'disabled'):
         raise ValueError('Configured Customer is disabled')
     taxes = _tax_rows(cfg['tax_template'], cfg['company'])
@@ -166,11 +192,18 @@ def _enrollment(name):
             or cint(doc.is_trial) or doc.payment_status != 'Paid' or not doc.member
             or doc.status not in ('Scheduled', 'Active', 'Completed')):
         raise ValueError('Only fully paid, nontrial PWA Commerce memberships can be invoiced')
-    if frappe.db.get_value('Club100 Plan', doc.plan, 'plan_code') != 'self':
-        raise ValueError('Only the Self plan is enabled for this accounting pilot')
+    from club100_core.api.enrollment import _get_price
+
+    plan_code = frappe.db.get_value('Club100 Plan', doc.plan, 'plan_code')
+    if plan_code not in ('self', 'group', 'group-plus', 'focus', 'coach'):
+        raise ValueError('Unsupported Club100 online membership plan')
+
     duration = cint(doc.membership_duration_months)
-    if duration not in (1, 3, 6, 12) or money(doc.monthly_equivalent) * duration != money(doc.amount_payable):
-        raise ValueError('Membership is not the original server-priced Self offer')
+    expected = _get_price(plan_code, duration)
+
+    if (money(doc.monthly_equivalent) != money(expected['monthly_equivalent'])
+            or money(doc.amount_payable) != money(expected['amount_payable'])):
+        raise ValueError('Membership does not match authoritative server pricing')
     if doc.payment_gateway == 'Razorpay':
         if (not str(doc.payment_id or '').startswith('pay_')
                 or not cint(doc.get('razorpay_capture_verified'))):
@@ -208,6 +241,7 @@ def preview_one(enrollment_id):
     try:
         from club100_core.accounting.billing_customer import require_existing_for_member
         cfg['customer'] = require_existing_for_member(enrollment.member, cfg['company'])
+        cfg['item'] = membership_item_for_plan(enrollment.plan)
         taxes = _ready(cfg, fin['sources'], fin['gateway'])
         _require_wallet_liability_backing(cfg, fin['sources'], allocations)
     except Exception as exc:
@@ -249,17 +283,19 @@ def _create_invoice(enrollment, cfg, taxes):
         'due_date': invoice_date,
         'currency': 'INR', 'update_stock': 0,
         'taxes_and_charges': cfg['tax_template'],
-        'remarks': 'Club100 Self membership ' + enrollment.name + ' (server-priced checkout)',
+        'remarks': 'Club100 membership ' + str(enrollment.plan or '') + ' | ' + enrollment.name + ' (server-priced checkout)',
         'items': [{'item_code': cfg['item'], 'qty': 1, 'rate': float(money(enrollment.amount_payable)),
-                   'description': ('Club100 Self membership | ' + str(enrollment.program or '')
+                   'description': ('Club100 membership | ' + str(enrollment.plan or '') + ' | ' + str(enrollment.program or '')
                      + ' | ' + str(enrollment.membership_duration_months) + ' months'
-                     + ' | ' + str(enrollment.start_date or '')
-                     + ' to ' + str(enrollment.end_date or ''))}],
+                     + ((' | ' + str(enrollment.start_date) + ' to ' + str(enrollment.end_date))
+                        if enrollment.start_date and enrollment.end_date
+                        else ' | training commencement pending manual onboarding'))}],
         'taxes': taxes,
     })
     doc.insert(ignore_permissions=True)
     invoice_integrity(enrollment.amount_payable, doc.net_total, doc.total_taxes_and_charges, doc.grand_total)
-    if len(doc.items or []) != 1 or money(doc.items[0].net_amount) != money(doc.net_total):
+    if (len(doc.items or []) != 1 or doc.items[0].item_code != cfg['item']
+            or money(doc.items[0].net_amount) != money(doc.net_total)):
         raise ValueError('Invoice generated unexpected extra lines/charges')
     doc.submit()
     if doc.docstatus != 1:
@@ -345,6 +381,7 @@ def post_one(enrollment_id, commit=True):
     cfg = _config()
     from club100_core.accounting.billing_customer import require_existing_for_member
     cfg['customer'] = require_existing_for_member(doc.member, cfg['company'])
+    cfg['item'] = membership_item_for_plan(doc.plan)
     taxes = _ready(cfg, financial['sources'], financial['gateway'])
     # Serialize GL liability postings across members sharing a common source account.
     for liability_account in sorted({cfg[source] for source in financial['sources']}):
@@ -361,7 +398,7 @@ def post_one(enrollment_id, commit=True):
         with _internal_write():
             record = frappe.get_doc({'doctype':'Club100 Membership Accounting',
                  'enrollment':doc.name, 'member':doc.member, 'customer':invoice.customer,
-                 'sales_invoice':invoice.name,
+                 'sales_invoice':invoice.name, 'billing_item':invoice.items[0].item_code,
                  'gateway_payment_entry':payment.name if payment else '',
                  'wallet_journal_entry':journal.name if journal else '',
                  'gross':financial['gross'], 'wallet_paid':financial['wallet'],

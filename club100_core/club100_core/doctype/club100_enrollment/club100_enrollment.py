@@ -40,6 +40,31 @@ class Club100Enrollment(Document):
         self.validate_cohort_capacity()
         self.validate_duplicate_active_enrollment()
         self.protect_wallet_checkout_tender()
+        self.validate_training_onboarding()
+
+    def validate_training_onboarding(self):
+        """Never grant trainer-led PWA access before manually completed onboarding."""
+        if (self.pricing_model != 'Online Plan' or self.website_source != 'PWA Commerce'
+                or not self.plan or cint(self.is_trial)):
+            return
+        code = frappe.db.get_value('Club100 Plan', self.plan, 'plan_code')
+        if code not in ('group', 'group-plus', 'focus', 'coach'):
+            return
+        state = self.get('training_onboarding_status') or 'Pending'
+        if state != 'Completed' and self.status in ('Active', 'Completed'):
+            frappe.throw('Trainer-led membership cannot be Active before onboarding is completed.')
+        if state == 'Completed' and (not self.cohort or not self.start_date or not self.end_date):
+            frappe.throw('Completed training onboarding requires a cohort and validity dates.')
+        if state == 'Completed' and not getattr(frappe.flags, 'club100_training_onboarding_write', False):
+            before = self.get_doc_before_save() if not self.is_new() else None
+            if not before or before.get('training_onboarding_status') != 'Completed':
+                frappe.throw('Complete onboarding using the verified Club100 action.')
+            for field in ('start_date', 'end_date', 'cohort', 'training_onboarding_completed_on'):
+                if str(before.get(field) or '') != str(self.get(field) or ''):
+                    frappe.throw('Completed onboarding details are immutable: ' + field)
+        if (self.payment_status == 'Paid' and state in ('Pending','In Progress')
+                and (self.start_date or self.end_date)):
+            frappe.throw('Training validity cannot start before onboarding is complete.')
 
     def protect_wallet_checkout_tender(self):
         """Forbid editing gross and tender snapshot of a funded enrollment."""

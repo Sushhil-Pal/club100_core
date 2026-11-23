@@ -28,13 +28,12 @@ REFERRAL_EVENT = 'CLUB100:REFERRAL:'
 
 
 def _post_allowed():
-    """Explicit Administrator-run accounting booking, local Test Mode only.
+    """Funding posting is available by default to privileged finance actors.
 
-    No stage-level operational feature flags. Receipt, document, source-GL,
-    pool-identity and duplicate-event checks remain mandatory in the posting
-    functions and cannot be bypassed by this guard.
+    _require_post and the posting functions retain the submitted receipt,
+    backing GL, source identity, and idempotency validations.
     """
-    return bool(_local_pilot())
+    return True
 
 
 def _require_post():

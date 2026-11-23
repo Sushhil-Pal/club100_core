@@ -10,6 +10,7 @@ class Club100Plan(Document):
         self.validate_delivery_configuration()
         self.validate_workout_access_window()
         self.validate_self_workout_configuration()
+        self.validate_membership_item()
 
     def normalize_plan_code(self):
         self.plan_code = str(
@@ -79,3 +80,11 @@ class Club100Plan(Document):
         # A Self plan can be saved before program-specific cycles are published.
         if count and not 1 <= count <= 7:
             frappe.throw("Self Workouts Per Week must be between 1 and 7.")
+
+    def validate_membership_item(self):
+        # Allow master-data setup and legacy plan migrations without an item.
+        # Paid online checkout performs a mandatory preflight separately.
+        if not self.membership_item:
+            return
+        from club100_core.accounting.settlement import validate_membership_item
+        validate_membership_item(self.membership_item)
